@@ -1,8 +1,8 @@
 // Quran Live Broadcast - Controller & Recitation Synchronizer
 const state = {
   page: 0,
-  perPage: 5,
-  totalPages: 39,
+  perPage: 6,
+  totalPages: 33,
   rotationSeconds: 35,
   rotationLeft: 35,
   cityData: [],
@@ -118,6 +118,26 @@ const defaultCities = [
       { name: 'العصر', time: '5:12', next: true },
       { name: 'المغرب', time: '8:58' },
       { name: 'العشاء', time: '10:37' }
+    ]
+  },
+  {
+    code: 'PS',
+    nameAr: 'فلسطين',
+    capitalAr: 'القدس الشريف',
+    flag: '/assets/flags/ps.png',
+    landmark: '/assets/makkah.jpg',
+    timezone: 'Asia/Jerusalem',
+    weather: { temp: '22°C', icon: '☀️', max: '26°', min: '17°' },
+    timeDisplay: '8:15 AM',
+    dateHijri: '12 شعبان 1447 هـ',
+    dateGreg: '26 فبراير 2025 م',
+    prayers: [
+      { name: 'الفجر', time: '4:45' },
+      { name: 'الشروق', time: '6:08' },
+      { name: 'الظهر', time: '12:35' },
+      { name: 'العصر', time: '4:02', next: true },
+      { name: 'المغرب', time: '6:42' },
+      { name: 'العشاء', time: '8:05' }
     ]
   }
 ];

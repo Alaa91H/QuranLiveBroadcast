@@ -397,14 +397,14 @@ html, body {
   box-shadow: -15px 0 50px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
-  padding: 10px 12px;
+  padding: 8px 10px;
   direction: ltr;
 }
 
 .city-cards-list {
   display: grid;
-  grid-template-rows: repeat(5, 1fr);
-  gap: 9px;
+  grid-template-rows: repeat(6, 1fr);
+  gap: 6px;
   flex: 1;
   height: 100%;
   min-height: 0;
@@ -414,9 +414,9 @@ html, body {
 .city-card {
   position: relative;
   border: 1px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: 13px;
   background: var(--card-bg);
-  padding: 10px 14px 9px;
+  padding: 7px 11px 6px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -446,17 +446,19 @@ html, body {
   justify-content: space-between;
   gap: 5px;
   direction: rtl;
+  height: 48px;
 }
 
 .meta-subcard {
   background: rgba(3, 20, 32, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 11px;
-  padding: 4px 6px;
+  border-radius: 9px;
+  padding: 3px 6px;
   display: flex;
   align-items: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(8px);
+  height: 100%;
 }
 
 /* 1. Time & Day Subcard (Far Right in RTL) */
@@ -645,7 +647,7 @@ html, body {
   text-overflow: ellipsis;
 }
 
-/* Prayer Times 6-column Grid */
+/* Prayer Times 6-column Grid - Fills remaining card space cleanly */
 .prayer-times-row {
   position: relative;
   z-index: 2;
@@ -653,6 +655,8 @@ html, body {
   grid-template-columns: repeat(6, 1fr);
   gap: 5px;
   margin-top: 5px;
+  flex: 1;
+  min-height: 70px;
   direction: rtl;
 }
 
@@ -661,23 +665,24 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4px 2px 3px;
-  border-radius: 8px;
+  padding: 5px 2px;
+  border-radius: 9px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.09);
   text-align: center;
   transition: all 0.25s ease;
+  height: 100%;
 }
 
 .p-name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   color: #cbd5e1;
   margin-bottom: 2px;
 }
 
 .p-time {
-  font-size: 15.5px;
+  font-size: 16px;
   font-weight: 900;
   color: #ffffff;
   font-variant-numeric: tabular-nums;
@@ -691,17 +696,17 @@ html, body {
   border: 1.5px solid rgba(245, 214, 122, 0.95);
   border-radius: 9px;
   box-shadow: 0 0 14px rgba(212, 175, 55, 0.35);
-  padding: 3.5px 2px 2.5px;
 }
 
 .p-col.active-next .p-name {
   color: var(--gold-light);
   font-weight: 900;
+  font-size: 12.5px;
 }
 
 .p-col.active-next .p-time {
   color: #fff8dc;
   font-weight: 900;
-  font-size: 16px;
+  font-size: 17px;
   text-shadow: 0 0 8px rgba(245, 214, 122, 0.4);
 }
