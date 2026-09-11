@@ -1,0 +1,19 @@
+# secrets - never push stream keys
+.env
+
+# runtime state
+logs/
+runtime/
+web/.cache/
+node_modules/
+.edge_cache_clean/
+
+# large media - refetch with scripts/download_afasy.sh
+*.mp3
+*.mp4
+
+# archives
+*.zip
+
+# system
+.DS_Store

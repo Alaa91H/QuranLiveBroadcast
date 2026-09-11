@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="description" content="Quran Live Broadcast - 24/7 Automated High Efficiency Quran Stream with Verse Recitation Synchronization, Dual Tafsir, and Global Prayer Times"/>
+  <title>Quran Live Broadcast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+  <div class="scene"></div>
+  <div class="vignette"></div>
+
+  <div class="broadcast-container">
+    <!-- LEFT PANEL: QURAN & TAFSIR STAGE -->
+    <section class="quran-stage" aria-label="القرآن الكريم">
+      <div class="quran-content-wrapper" id="quran-content-wrapper">
+        <!-- Arabic Ayah (Without ornament as requested) -->
+        <div class="ayah-ar" id="ayah-ar" data-fit="ayah">
+          اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ
+        </div>
+
+        <!-- English Translation -->
+        <div class="ayah-translation-en" id="ayah-en" data-fit="translation">
+          Allah! There is no deity except Him, the Ever-Living, the Sustainer of [all] existence.
+        </div>
+
+        <div class="content-divider"></div>
+
+        <!-- Tafsir Container -->
+        <div class="tafsir-container" id="tafsir-container">
+          <!-- Arabic Tafsir (Clean without top badges) -->
+          <div class="tafsir-card tafsir-card-ar">
+            <p class="tafsir-text" id="tafsir-ar" data-fit="tafsir-ar">
+              الله الذي لا إله بحق إلا هو، المتصف بالحياة الكاملة الدائمة والقيومية التامة على جميع خلقه تدبيرًا وحفظًا، لا تأخذه سِنَةٌ ولا نوم.
+            </p>
+          </div>
+
+          <!-- English Tafsir (Clean without top badges) -->
+          <div class="tafsir-card tafsir-card-en" dir="ltr">
+            <p class="tafsir-text" id="tafsir-en" data-fit="tafsir-en">
+              The verse affirms that Allah alone is the true God worthy of worship, possessing complete everlasting life, and sustaining all creation without fatigue or slumber.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Bottom Adjacent Cards: 1. Surah & Ayah (+Makki/Madani), 2. Tafsir Info, 3. Reciter Info -->
+      <div class="floating-pills-container">
+        <!-- Card 1: Surah & Ayah Info with Makkiyah / Madaniyah -->
+        <div class="glass-pill surah-ayah-pill">
+          <div class="pill-icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+          </div>
+          <div class="pill-info-stack">
+            <div class="surah-title" id="meta-surah-title">
+              سُورَةُ البَقَرَةِ <span class="surah-index">(2)</span> <span class="revelation-tag" id="meta-revelation">مَدَنِيَّة</span>
+            </div>
+            <div class="ayah-meta">الآية رقم <strong class="gold-num" id="meta-ayah-num">255</strong> من <span id="meta-total-ayahs">286</span></div>
+          </div>
+        </div>
+
+        <!-- Card 2: Tafsir Info Card (Transferred from top badges) -->
+        <div class="glass-pill tafsir-info-pill">
+          <div class="pill-icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              <line x1="9" y1="7" x2="15" y2="7"/>
+              <line x1="9" y1="11" x2="15" y2="11"/>
+            </svg>
+          </div>
+          <div class="pill-info-stack">
+            <div class="tafsir-title-ar" id="meta-tafsir-ar">التفسير: المُيَسَّر</div>
+            <div class="tafsir-title-en" id="meta-tafsir-en">Tafsir: Al-Muyassar</div>
+          </div>
+        </div>
+
+        <!-- Card 3: Reciter Info Card -->
+        <div class="glass-pill reciter-pill">
+          <div class="reciter-avatar-box">
+            <img src="/assets/alafasy.jpg" alt="Mishary Alafasy" class="reciter-avatar-img">
+          </div>
+          <div class="reciter-info-col">
+            <strong class="reciter-name-ar">القارئ: مشاري العفاسي</strong>
+            <span class="reciter-name-en">Reciter: Mishary Alafasy</span>
+          </div>
+          <div class="wave-equalizer" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="speaker-icon-box" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: WORLD CITIES & PRAYER TIMES (Full height, footer removed) -->
+    <aside class="world-panel" aria-label="مدن العالم">
+      <div class="city-cards-list" id="city-cards-container">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </aside>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

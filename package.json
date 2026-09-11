@@ -1,0 +1,17 @@
+{
+  "name": "quran-live-broadcast",
+  "version": "2.0.0",
+  "description": "24/7 Autonomous High-Efficiency Quran Live Broadcast with Recitation Sync, Dual Tafsir, and Global Prayer Times",
+  "main": "web/server.js",
+  "scripts": {
+    "web": "node web/server.js",
+    "qa": "node scripts/qa.js",
+    "test": "node scripts/qa.js",
+    "broadcast": "./scripts/broadcast_ui.sh"
+  },
+  "author": "Alaa Hussein",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

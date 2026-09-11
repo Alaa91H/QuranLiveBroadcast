@@ -1,0 +1,25 @@
+[Unit]
+Description=Quran 24/7 TikTok Stream - Afasy High Quality Optimized
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=%h/quran-24-7
+EnvironmentFile=-%h/quran-24-7/.env
+ExecStart=%h/quran-24-7/scripts/stream_tiktok.sh
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+Nice=10
+CPUWeight=80
+MemoryMax=700M
+StandardOutput=append:%h/quran-24-7/logs/systemd_tiktok.log
+StandardError=append:%h/quran-24-7/logs/systemd_tiktok.log
+# تنظيف تلقائي للذاكرة
+WatchdogSec=300
+
+[Install]
+WantedBy=default.target

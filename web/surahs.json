@@ -1,0 +1,800 @@
+[
+  {
+    "number": 1,
+    "nameAr": "سُورَةُ ٱلْفَاتِحَةِ",
+    "nameEn": "Al-Faatiha",
+    "ayahs": 7,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 2,
+    "nameAr": "سُورَةُ البَقَرَةِ",
+    "nameEn": "Al-Baqara",
+    "ayahs": 286,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 3,
+    "nameAr": "سُورَةُ آلِ عِمۡرَانَ",
+    "nameEn": "Aal-i-Imraan",
+    "ayahs": 200,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 4,
+    "nameAr": "سُورَةُ النِّسَاءِ",
+    "nameEn": "An-Nisaa",
+    "ayahs": 176,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 5,
+    "nameAr": "سُورَةُ المَائـِدَةِ",
+    "nameEn": "Al-Maaida",
+    "ayahs": 120,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 6,
+    "nameAr": "سُورَةُ الأَنۡعَامِ",
+    "nameEn": "Al-An'aam",
+    "ayahs": 165,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 7,
+    "nameAr": "سُورَةُ الأَعۡرَافِ",
+    "nameEn": "Al-A'raaf",
+    "ayahs": 206,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 8,
+    "nameAr": "سُورَةُ الأَنفَالِ",
+    "nameEn": "Al-Anfaal",
+    "ayahs": 75,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 9,
+    "nameAr": "سُورَةُ التَّوۡبَةِ",
+    "nameEn": "At-Tawba",
+    "ayahs": 129,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 10,
+    "nameAr": "سُورَةُ يُونُسَ",
+    "nameEn": "Yunus",
+    "ayahs": 109,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 11,
+    "nameAr": "سُورَةُ هُودٍ",
+    "nameEn": "Hud",
+    "ayahs": 123,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 12,
+    "nameAr": "سُورَةُ يُوسُفَ",
+    "nameEn": "Yusuf",
+    "ayahs": 111,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 13,
+    "nameAr": "سُورَةُ الرَّعۡدِ",
+    "nameEn": "Ar-Ra'd",
+    "ayahs": 43,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 14,
+    "nameAr": "سُورَةُ إِبۡرَاهِيمَ",
+    "nameEn": "Ibrahim",
+    "ayahs": 52,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 15,
+    "nameAr": "سُورَةُ الحِجۡرِ",
+    "nameEn": "Al-Hijr",
+    "ayahs": 99,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 16,
+    "nameAr": "سُورَةُ النَّحۡلِ",
+    "nameEn": "An-Nahl",
+    "ayahs": 128,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 17,
+    "nameAr": "سُورَةُ الإِسۡرَاءِ",
+    "nameEn": "Al-Israa",
+    "ayahs": 111,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 18,
+    "nameAr": "سُورَةُ الكَهۡفِ",
+    "nameEn": "Al-Kahf",
+    "ayahs": 110,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 19,
+    "nameAr": "سُورَةُ مَرۡيَمَ",
+    "nameEn": "Maryam",
+    "ayahs": 98,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 20,
+    "nameAr": "سُورَةُ طه",
+    "nameEn": "Taa-Haa",
+    "ayahs": 135,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 21,
+    "nameAr": "سُورَةُ الأَنبِيَاءِ",
+    "nameEn": "Al-Anbiyaa",
+    "ayahs": 112,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 22,
+    "nameAr": "سُورَةُ الحَجِّ",
+    "nameEn": "Al-Hajj",
+    "ayahs": 78,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 23,
+    "nameAr": "سُورَةُ المُؤۡمِنُونَ",
+    "nameEn": "Al-Muminoon",
+    "ayahs": 118,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 24,
+    "nameAr": "سُورَةُ النُّورِ",
+    "nameEn": "An-Noor",
+    "ayahs": 64,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 25,
+    "nameAr": "سُورَةُ الفُرۡقَانِ",
+    "nameEn": "Al-Furqaan",
+    "ayahs": 77,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 26,
+    "nameAr": "سُورَةُ الشُّعَرَاءِ",
+    "nameEn": "Ash-Shu'araa",
+    "ayahs": 227,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 27,
+    "nameAr": "سُورَةُ النَّمۡلِ",
+    "nameEn": "An-Naml",
+    "ayahs": 93,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 28,
+    "nameAr": "سُورَةُ القَصَصِ",
+    "nameEn": "Al-Qasas",
+    "ayahs": 88,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 29,
+    "nameAr": "سُورَةُ العَنكَبُوتِ",
+    "nameEn": "Al-Ankaboot",
+    "ayahs": 69,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 30,
+    "nameAr": "سُورَةُ الرُّومِ",
+    "nameEn": "Ar-Room",
+    "ayahs": 60,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 31,
+    "nameAr": "سُورَةُ لُقۡمَانَ",
+    "nameEn": "Luqman",
+    "ayahs": 34,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 32,
+    "nameAr": "سُورَةُ السَّجۡدَةِ",
+    "nameEn": "As-Sajda",
+    "ayahs": 30,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 33,
+    "nameAr": "سُورَةُ الأَحۡزَابِ",
+    "nameEn": "Al-Ahzaab",
+    "ayahs": 73,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 34,
+    "nameAr": "سُورَةُ سَبَإٍ",
+    "nameEn": "Saba",
+    "ayahs": 54,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 35,
+    "nameAr": "سُورَةُ فَاطِرٍ",
+    "nameEn": "Faatir",
+    "ayahs": 45,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 36,
+    "nameAr": "سُورَةُ يسٓ",
+    "nameEn": "Yaseen",
+    "ayahs": 83,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 37,
+    "nameAr": "سُورَةُ الصَّافَّاتِ",
+    "nameEn": "As-Saaffaat",
+    "ayahs": 182,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 38,
+    "nameAr": "سُورَةُ صٓ",
+    "nameEn": "Saad",
+    "ayahs": 88,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 39,
+    "nameAr": "سُورَةُ الزُّمَرِ",
+    "nameEn": "Az-Zumar",
+    "ayahs": 75,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 40,
+    "nameAr": "سُورَةُ غَافِرٍ",
+    "nameEn": "Ghafir",
+    "ayahs": 85,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 41,
+    "nameAr": "سُورَةُ فُصِّلَتۡ",
+    "nameEn": "Fussilat",
+    "ayahs": 54,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 42,
+    "nameAr": "سُورَةُ الشُّورَىٰ",
+    "nameEn": "Ash-Shura",
+    "ayahs": 53,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 43,
+    "nameAr": "سُورَةُ الزُّخۡرُفِ",
+    "nameEn": "Az-Zukhruf",
+    "ayahs": 89,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 44,
+    "nameAr": "سُورَةُ الدُّخَانِ",
+    "nameEn": "Ad-Dukhaan",
+    "ayahs": 59,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 45,
+    "nameAr": "سُورَةُ الجَاثِيَةِ",
+    "nameEn": "Al-Jaathiya",
+    "ayahs": 37,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 46,
+    "nameAr": "سُورَةُ الأَحۡقَافِ",
+    "nameEn": "Al-Ahqaf",
+    "ayahs": 35,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 47,
+    "nameAr": "سُورَةُ مُحَمَّدٍ",
+    "nameEn": "Muhammad",
+    "ayahs": 38,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 48,
+    "nameAr": "سُورَةُ الفَتۡحِ",
+    "nameEn": "Al-Fath",
+    "ayahs": 29,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 49,
+    "nameAr": "سُورَةُ الحُجُرَاتِ",
+    "nameEn": "Al-Hujuraat",
+    "ayahs": 18,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 50,
+    "nameAr": "سُورَةُ قٓ",
+    "nameEn": "Qaaf",
+    "ayahs": 45,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 51,
+    "nameAr": "سُورَةُ الذَّارِيَاتِ",
+    "nameEn": "Adh-Dhaariyat",
+    "ayahs": 60,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 52,
+    "nameAr": "سُورَةُ الطُّورِ",
+    "nameEn": "At-Tur",
+    "ayahs": 49,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 53,
+    "nameAr": "سُورَةُ النَّجۡمِ",
+    "nameEn": "An-Najm",
+    "ayahs": 62,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 54,
+    "nameAr": "سُورَةُ القَمَرِ",
+    "nameEn": "Al-Qamar",
+    "ayahs": 55,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 55,
+    "nameAr": "سُورَةُ الرَّحۡمَٰن",
+    "nameEn": "Ar-Rahmaan",
+    "ayahs": 78,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 56,
+    "nameAr": "سُورَةُ الوَاقِعَةِ",
+    "nameEn": "Al-Waaqia",
+    "ayahs": 96,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 57,
+    "nameAr": "سُورَةُ الحَدِيدِ",
+    "nameEn": "Al-Hadid",
+    "ayahs": 29,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 58,
+    "nameAr": "سُورَةُ المُجَادلَةِ",
+    "nameEn": "Al-Mujaadila",
+    "ayahs": 22,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 59,
+    "nameAr": "سُورَةُ الحَشۡرِ",
+    "nameEn": "Al-Hashr",
+    "ayahs": 24,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 60,
+    "nameAr": "سُورَةُ المُمۡتَحنَةِ",
+    "nameEn": "Al-Mumtahana",
+    "ayahs": 13,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 61,
+    "nameAr": "سُورَةُ الصَّفِّ",
+    "nameEn": "As-Saff",
+    "ayahs": 14,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 62,
+    "nameAr": "سُورَةُ الجُمُعَةِ",
+    "nameEn": "Al-Jumu'a",
+    "ayahs": 11,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 63,
+    "nameAr": "سُورَةُ المُنَافِقُونَ",
+    "nameEn": "Al-Munaafiqoon",
+    "ayahs": 11,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 64,
+    "nameAr": "سُورَةُ التَّغَابُنِ",
+    "nameEn": "At-Taghaabun",
+    "ayahs": 18,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 65,
+    "nameAr": "سُورَةُ الطَّلَاقِ",
+    "nameEn": "At-Talaaq",
+    "ayahs": 12,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 66,
+    "nameAr": "سُورَةُ التَّحۡرِيمِ",
+    "nameEn": "At-Tahrim",
+    "ayahs": 12,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 67,
+    "nameAr": "سُورَةُ المُلۡكِ",
+    "nameEn": "Al-Mulk",
+    "ayahs": 30,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 68,
+    "nameAr": "سُورَةُ القَلَمِ",
+    "nameEn": "Al-Qalam",
+    "ayahs": 52,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 69,
+    "nameAr": "سُورَةُ الحَاقَّةِ",
+    "nameEn": "Al-Haaqqa",
+    "ayahs": 52,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 70,
+    "nameAr": "سُورَةُ المَعَارِجِ",
+    "nameEn": "Al-Ma'aarij",
+    "ayahs": 44,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 71,
+    "nameAr": "سُورَةُ نُوحٍ",
+    "nameEn": "Nooh",
+    "ayahs": 28,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 72,
+    "nameAr": "سُورَةُ الجِنِّ",
+    "nameEn": "Al-Jinn",
+    "ayahs": 28,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 73,
+    "nameAr": "سُورَةُ المُزَّمِّلِ",
+    "nameEn": "Al-Muzzammil",
+    "ayahs": 20,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 74,
+    "nameAr": "سُورَةُ المُدَّثِّرِ",
+    "nameEn": "Al-Muddaththir",
+    "ayahs": 56,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 75,
+    "nameAr": "سُورَةُ القِيَامَةِ",
+    "nameEn": "Al-Qiyaama",
+    "ayahs": 40,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 76,
+    "nameAr": "سُورَةُ الإِنسَانِ",
+    "nameEn": "Al-Insaan",
+    "ayahs": 31,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 77,
+    "nameAr": "سُورَةُ المُرۡسَلَاتِ",
+    "nameEn": "Al-Mursalaat",
+    "ayahs": 50,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 78,
+    "nameAr": "سُورَةُ النَّبَإِ",
+    "nameEn": "An-Naba",
+    "ayahs": 40,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 79,
+    "nameAr": "سُورَةُ النَّازِعَاتِ",
+    "nameEn": "An-Naazi'aat",
+    "ayahs": 46,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 80,
+    "nameAr": "سُورَةُ عَبَسَ",
+    "nameEn": "Abasa",
+    "ayahs": 42,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 81,
+    "nameAr": "سُورَةُ التَّكۡوِيرِ",
+    "nameEn": "At-Takwir",
+    "ayahs": 29,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 82,
+    "nameAr": "سُورَةُ الانفِطَارِ",
+    "nameEn": "Al-Infitaar",
+    "ayahs": 19,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 83,
+    "nameAr": "سُورَةُ المُطَفِّفِينَ",
+    "nameEn": "Al-Mutaffifin",
+    "ayahs": 36,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 84,
+    "nameAr": "سُورَةُ الانشِقَاقِ",
+    "nameEn": "Al-Inshiqaaq",
+    "ayahs": 25,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 85,
+    "nameAr": "سُورَةُ البُرُوجِ",
+    "nameEn": "Al-Burooj",
+    "ayahs": 22,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 86,
+    "nameAr": "سُورَةُ الطَّارِقِ",
+    "nameEn": "At-Taariq",
+    "ayahs": 17,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 87,
+    "nameAr": "سُورَةُ الأَعۡلَىٰ",
+    "nameEn": "Al-A'laa",
+    "ayahs": 19,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 88,
+    "nameAr": "سُورَةُ الغَاشِيَةِ",
+    "nameEn": "Al-Ghaashiya",
+    "ayahs": 26,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 89,
+    "nameAr": "سُورَةُ الفَجۡرِ",
+    "nameEn": "Al-Fajr",
+    "ayahs": 30,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 90,
+    "nameAr": "سُورَةُ البَلَدِ",
+    "nameEn": "Al-Balad",
+    "ayahs": 20,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 91,
+    "nameAr": "سُورَةُ الشَّمۡسِ",
+    "nameEn": "Ash-Shams",
+    "ayahs": 15,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 92,
+    "nameAr": "سُورَةُ اللَّيۡلِ",
+    "nameEn": "Al-Lail",
+    "ayahs": 21,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 93,
+    "nameAr": "سُورَةُ الضُّحَىٰ",
+    "nameEn": "Ad-Dhuhaa",
+    "ayahs": 11,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 94,
+    "nameAr": "سُورَةُ الشَّرۡحِ",
+    "nameEn": "Ash-Sharh",
+    "ayahs": 8,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 95,
+    "nameAr": "سُورَةُ التِّينِ",
+    "nameEn": "At-Tin",
+    "ayahs": 8,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 96,
+    "nameAr": "سُورَةُ العَلَقِ",
+    "nameEn": "Al-Alaq",
+    "ayahs": 19,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 97,
+    "nameAr": "سُورَةُ القَدۡرِ",
+    "nameEn": "Al-Qadr",
+    "ayahs": 5,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 98,
+    "nameAr": "سُورَةُ البَيِّنَةِ",
+    "nameEn": "Al-Bayyina",
+    "ayahs": 8,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 99,
+    "nameAr": "سُورَةُ الزَّلۡزَلَةِ",
+    "nameEn": "Az-Zalzala",
+    "ayahs": 8,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 100,
+    "nameAr": "سُورَةُ العَادِيَاتِ",
+    "nameEn": "Al-Aadiyaat",
+    "ayahs": 11,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 101,
+    "nameAr": "سُورَةُ القَارِعَةِ",
+    "nameEn": "Al-Qaari'a",
+    "ayahs": 11,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 102,
+    "nameAr": "سُورَةُ التَّكَاثُرِ",
+    "nameEn": "At-Takaathur",
+    "ayahs": 8,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 103,
+    "nameAr": "سُورَةُ العَصۡرِ",
+    "nameEn": "Al-Asr",
+    "ayahs": 3,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 104,
+    "nameAr": "سُورَةُ الهُمَزَةِ",
+    "nameEn": "Al-Humaza",
+    "ayahs": 9,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 105,
+    "nameAr": "سُورَةُ الفِيلِ",
+    "nameEn": "Al-Fil",
+    "ayahs": 5,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 106,
+    "nameAr": "سُورَةُ قُرَيۡشٍ",
+    "nameEn": "Quraish",
+    "ayahs": 4,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 107,
+    "nameAr": "سُورَةُ المَاعُونِ",
+    "nameEn": "Al-Maa'un",
+    "ayahs": 7,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 108,
+    "nameAr": "سُورَةُ الكَوۡثَرِ",
+    "nameEn": "Al-Kawthar",
+    "ayahs": 3,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 109,
+    "nameAr": "سُورَةُ الكَافِرُونَ",
+    "nameEn": "Al-Kaafiroon",
+    "ayahs": 6,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 110,
+    "nameAr": "سُورَةُ النَّصۡرِ",
+    "nameEn": "An-Nasr",
+    "ayahs": 3,
+    "type": "مَدَنِيَّة"
+  },
+  {
+    "number": 111,
+    "nameAr": "سُورَةُ المَسَدِ",
+    "nameEn": "Al-Masad",
+    "ayahs": 5,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 112,
+    "nameAr": "سُورَةُ الإِخۡلَاصِ",
+    "nameEn": "Al-Ikhlaas",
+    "ayahs": 4,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 113,
+    "nameAr": "سُورَةُ الفَلَقِ",
+    "nameEn": "Al-Falaq",
+    "ayahs": 5,
+    "type": "مَكِّيَّة"
+  },
+  {
+    "number": 114,
+    "nameAr": "سُورَةُ النَّاسِ",
+    "nameEn": "An-Naas",
+    "ayahs": 6,
+    "type": "مَكِّيَّة"
+  }
+]

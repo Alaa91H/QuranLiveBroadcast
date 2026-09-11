@@ -1,0 +1,665 @@
+// Quran Live Broadcast - Controller & Recitation Synchronizer
+const state = {
+  page: 0,
+  perPage: 5,
+  totalPages: 39,
+  rotationSeconds: 35,
+  rotationLeft: 35,
+  cityData: [],
+  surahs: [],
+  currentSurah: 1,
+  currentAyah: 1,
+  quran: null,
+  audio: null,
+  isPlaying: false,
+  fallbackTimer: null,
+  isQa: new URLSearchParams(location.search).get('qa') === '1' || new URLSearchParams(location.search).get('test') === 'longest'
+};
+
+const $ = id => document.getElementById(id);
+
+// Reference cities data with max/min temps, Hijri & Gregorian dates, and 6 prayer times
+const defaultCities = [
+  {
+    code: 'SA',
+    nameAr: 'المملكة العربية السعودية',
+    capitalAr: 'مكة المكرمة',
+    flag: '/assets/flag_sa.png',
+    landmark: '/assets/makkah.jpg',
+    timezone: 'Asia/Riyadh',
+    weather: { temp: '32°C', icon: '☀️', desc: 'مشمس', max: '36°', min: '24°' },
+    isMakkah: true,
+    dateHijri: '12 شعبان 1447 هـ',
+    dateGreg: '26 فبراير 2025 م',
+    prayers: [
+      { name: 'الفجر', time: '4:36' },
+      { name: 'الشروق', time: '5:58' },
+      { name: 'الظهر', time: '12:27' },
+      { name: 'العصر', time: '3:51', next: true },
+      { name: 'المغرب', time: '6:15' },
+      { name: 'العشاء', time: '7:45' }
+    ]
+  },
+  {
+    code: 'TR',
+    nameAr: 'تركيا',
+    capitalAr: 'إسطنبول',
+    flag: '/assets/flag_tr.png',
+    landmark: '/assets/istanbul.jpg',
+    timezone: 'Europe/Istanbul',
+    weather: { temp: '18°C', icon: '⛅', max: '21°', min: '14°' },
+    timeDisplay: '9:15 AM',
+    dateHijri: '12 شعبان 1447 هـ',
+    dateGreg: '26 فبراير 2025 م',
+    prayers: [
+      { name: 'الفجر', time: '5:55' },
+      { name: 'الشروق', time: '7:18' },
+      { name: 'الظهر', time: '12:49' },
+      { name: 'العصر', time: '4:18', next: true },
+      { name: 'المغرب', time: '7:32' },
+      { name: 'العشاء', time: '9:03' }
+    ]
+  },
+  {
+    code: 'EG',
+    nameAr: 'مصر',
+    capitalAr: 'القاهرة',
+    flag: '/assets/flag_eg.png',
+    landmark: '/assets/cairo.jpg',
+    timezone: 'Africa/Cairo',
+    weather: { temp: '28°C', icon: '☀️', max: '31°', min: '22°' },
+    timeDisplay: '8:15 AM',
+    dateHijri: '12 شعبان 1447 هـ',
+    dateGreg: '26 فبراير 2025 م',
+    prayers: [
+      { name: 'الفجر', time: '4:12' },
+      { name: 'الشروق', time: '5:54' },
+      { name: 'الظهر', time: '12:06' },
+      { name: 'العصر', time: '3:42', next: true },
+      { name: 'المغرب', time: '6:19' },
+      { name: 'العشاء', time: '7:48' }
+    ]
+  },
+  {
+    code: 'GB',
+    nameAr: 'المملكة المتحدة',
+    capitalAr: 'لندن',
+    flag: '/assets/flag_gb.png',
+    landmark: '/assets/london.jpg',
+    timezone: 'Europe/London',
+    weather: { temp: '12°C', icon: '☁️', max: '16°', min: '9°' },
+    timeDisplay: '8:15 AM',
+    dateHijri: '12 شعبان 1447 هـ',
+    dateGreg: '26 فبراير 2025 م',
+    prayers: [
+      { name: 'الفجر', time: '6:12' },
+      { name: 'الشروق', time: '7:45' },
+      { name: 'الظهر', time: '12:58' },
+      { name: 'العصر', time: '3:43', next: true },
+      { name: 'المغرب', time: '6:52' },
+      { name: 'العشاء', time: '8:37' }
+    ]
+  },
+  {
+    code: 'US',
+    nameAr: 'الولايات المتحدة الأمريكية',
+    capitalAr: 'نيويورك',
+    flag: '/assets/flag_us.png',
+    landmark: '/assets/newyork.jpg',
+    timezone: 'America/New_York',
+    weather: { temp: '20°C', icon: '☀️', max: '23°', min: '16°' },
+    timeDisplay: '3:15 AM',
+    dateHijri: '12 شعبان 1447 هـ',
+    dateGreg: '26 فبراير 2025 م',
+    prayers: [
+      { name: 'الفجر', time: '5:24' },
+      { name: 'الشروق', time: '6:58' },
+      { name: 'الظهر', time: '1:26' },
+      { name: 'العصر', time: '5:12', next: true },
+      { name: 'المغرب', time: '8:58' },
+      { name: 'العشاء', time: '10:37' }
+    ]
+  }
+];
+
+const prayerNamesList = [
+  ['Fajr', 'الفجر'],
+  ['Sunrise', 'الشروق'],
+  ['Dhuhr', 'الظهر'],
+  ['Asr', 'العصر'],
+  ['Maghrib', 'المغرب'],
+  ['Isha', 'العشاء']
+];
+
+const weatherGlyphs = {
+  0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
+  51: '🌦️', 53: '🌦️', 55: '🌧️', 61: '🌦️', 63: '🌧️', 65: '🌧️',
+  71: '❄️', 73: '❄️', 75: '❄️', 80: '🌦️', 81: '🌧️', 82: '🌧️',
+  95: '⛈️'
+};
+
+function formatPrayerTime(t) {
+  const m = String(t || '').match(/(\d{1,2}):(\d{2})/);
+  if (!m) return '--:--';
+  const d = new Date(2000, 0, 1, Number(m[1]), Number(m[2]));
+  return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
+}
+
+function parseMinutes(t) {
+  const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+
+function getLocalMinutes(tz) {
+  try {
+    const p = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: false, timeZone: tz || 'UTC' }).formatToParts(new Date());
+    return Number(p.find(x => x.type === 'hour')?.value || 0) * 60 + Number(p.find(x => x.type === 'minute')?.value || 0);
+  } catch {
+    return 0;
+  }
+}
+
+function getNextPrayerKey(timings, tz) {
+  const now = getLocalMinutes(tz);
+  const ordered = prayerNamesList.map(([key]) => ({ key, mins: parseMinutes(timings?.[key]) })).filter(x => x.mins != null);
+  const found = ordered.find(x => x.mins > now);
+  return (found || ordered[0] || { key: 'Asr' }).key;
+}
+
+function getCityDates(tz) {
+  try {
+    const d = new Date();
+    const greg = new Intl.DateTimeFormat('ar', { day: 'numeric', month: 'long', year: 'numeric', timeZone: tz || 'UTC' }).format(d);
+    const hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric', timeZone: tz || 'UTC' }).format(d);
+    return { greg, hijri: hijri + ' هـ' };
+  } catch {
+    return { greg: '26 فبراير 2025 م', hijri: '12 شعبان 1447 هـ' };
+  }
+}
+
+function formatClockTime(tz) {
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: tz || 'UTC'
+    }).format(new Date());
+  } catch {
+    return '--:--';
+  }
+}
+
+function getCityDayName(tz) {
+  try {
+    return new Intl.DateTimeFormat('ar-SA', { weekday: 'long', timeZone: tz || 'UTC' }).format(new Date());
+  } catch {
+    return 'الجمعة';
+  }
+}
+
+function renderCityCard(c) {
+  const timings = c.prayer?.timings || null;
+  const nextKey = timings ? getNextPrayerKey(timings, c.timezone) : (c.prayers?.find(x => x.next)?.name === 'العصر' ? 'Asr' : 'Asr');
+  const dates = (c.dateHijri && c.dateGreg) ? { hijri: c.dateHijri, greg: c.dateGreg } : getCityDates(c.timezone);
+  const dayName = getCityDayName(c.timezone);
+  
+  const tempVal = c.weather?.temp || (c.weather?.temperature_2m != null ? `${Math.round(c.weather.temperature_2m)}°C` : '24°C');
+  const tempMax = c.weather?.max || (c.weather?.temperature_2m_max != null ? `${Math.round(c.weather.temperature_2m_max)}°` : '28°');
+  const tempMin = c.weather?.min || (c.weather?.temperature_2m_min != null ? `${Math.round(c.weather.temperature_2m_min)}°` : '18°');
+  const icon = c.weather?.icon || weatherGlyphs[c.weather?.weather_code] || '☀️';
+  
+  const landmark = c.landmark || '/assets/makkah.jpg';
+  const flagSrc = (c.code && c.code.length === 2)
+    ? `/assets/flags/${c.code.toLowerCase()}.png`
+    : (c.flag?.startsWith('/') ? c.flag : '/assets/flag_sa.png');
+  const flagEmoji = c.flag && !c.flag.startsWith('/') ? c.flag : '🏳️';
+
+  let prayersList = [];
+  if (c.prayers) {
+    prayersList = c.prayers;
+  } else if (timings) {
+    prayersList = prayerNamesList.map(([key, label]) => ({
+      name: label,
+      time: formatPrayerTime(timings[key]),
+      next: key === nextKey
+    }));
+  } else {
+    prayersList = prayerNamesList.map(([, label]) => ({ name: label, time: '--:--', next: label === 'العصر' }));
+  }
+
+  // Active prayer is highlighted with golden border, NO text label "الوقت القادم"
+  const prayersHtml = prayersList.map(p => `
+    <div class="p-col ${p.next ? 'active-next' : ''}">
+      <span class="p-name">${p.name}</span>
+      <span class="p-time">${p.time}</span>
+    </div>
+  `).join('');
+
+  const timeDisplay = c.timeDisplay || formatClockTime(c.timezone);
+
+  return `
+    <article class="city-card" data-code="${c.code || ''}">
+      <div class="city-card-bg" style="background-image: url('${landmark}')"></div>
+      
+      <div class="subcards-row">
+        <!-- 1. Day & Time Subcard (Far Right in RTL) -->
+        <div class="meta-subcard time-day-subcard">
+          <span class="sc-day" data-day-tz="${c.timezone || ''}">${dayName}</span>
+          <strong class="sc-time" data-tz="${c.timezone || ''}">${timeDisplay}</strong>
+        </div>
+
+        <!-- 2. Hijri & Gregorian Dates Subcard -->
+        <div class="meta-subcard dates-subcard">
+          <span class="sc-hijri">${dates.hijri}</span>
+          <span class="sc-greg">${dates.greg}</span>
+        </div>
+
+        <!-- 3. Weather Subcard: High/Low stacked on right, Temp & Icon on left -->
+        <div class="meta-subcard weather-subcard">
+          <div class="sc-hilo-stack">
+            <span class="sc-hi">عظمى ${tempMax}</span>
+            <span class="sc-lo">صغرى ${tempMin}</span>
+          </div>
+          <div class="sc-temp-group">
+            <span class="sc-wx-icon">${icon}</span>
+            <strong class="sc-temp-val">${tempVal}</strong>
+          </div>
+        </div>
+
+        <!-- 4. Flag & City/Country Identity Subcard (Far Left in RTL) -->
+        <div class="meta-subcard identity-subcard">
+          <div class="city-flag-box" title="${c.nameAr || c.name || ''}">
+            <img src="${flagSrc}" alt="${c.code || ''}" class="city-flag-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+            <span class="city-flag-emoji" style="display:none;">${flagEmoji}</span>
+          </div>
+          <div class="city-name-col">
+            <h3 class="city-name">${c.capitalAr || c.capital || ''}</h3>
+            <span class="city-country">${c.nameAr || c.name || ''}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="prayer-times-row">
+        ${prayersHtml}
+      </div>
+    </article>
+  `;
+}
+
+function renderCities(cities) {
+  const container = $('city-cards-container');
+  if (!container) return;
+  container.innerHTML = cities.map(renderCityCard).join('');
+}
+
+// Dynamic Auto-Fit Algorithm: prevents overflow, clipping, or overlaps on any screen resolution or long verses
+function fitElement(el, minPx, maxPx, step = 1) {
+  if (!el) return;
+  let size = maxPx;
+  el.style.fontSize = `${size}px`;
+  let guard = 0;
+  while (guard++ < 50 && size > minPx && el.scrollHeight > el.clientHeight + 1) {
+    size -= step;
+    el.style.fontSize = `${size}px`;
+  }
+}
+
+function fitAllContent() {
+  const ayahEl = $('ayah-ar');
+  const trEl = $('ayah-en');
+  const tafArEl = $('tafsir-ar');
+  const tafEnEl = $('tafsir-en');
+  if (!ayahEl) return;
+
+  const q = state.quran;
+  const arLen = (q?.arabic || ayahEl.textContent || '').trim().length;
+  const trLen = (q?.translation || trEl?.textContent || '').trim().length;
+  const tafArLen = (q?.tafsirAr || tafArEl?.textContent || '').trim().length;
+  const tafEnLen = (q?.tafsirEn || tafEnEl?.textContent || '').trim().length;
+
+  // Dynamic typography range based on text volume
+  let ayahMax = 58, ayahMin = 22;
+  if (arLen < 70) { ayahMax = 64; ayahMin = 48; }
+  else if (arLen < 180) { ayahMax = 56; ayahMin = 36; }
+  else if (arLen < 380) { ayahMax = 44; ayahMin = 28; }
+  else { ayahMax = 28; ayahMin = 18; } // Longest verse 2:282
+
+  let trMax = 23, trMin = 14;
+  if (trLen < 120) { trMax = 26; trMin = 20; }
+  else if (trLen < 320) { trMax = 22; trMin = 16; }
+  else { trMax = 17.5; trMin = 12.5; }
+
+  let tafArMax = 19, tafArMin = 13;
+  if (tafArLen < 160) { tafArMax = 22; tafArMin = 17; }
+  else if (tafArLen < 380) { tafArMax = 19; tafArMin = 14.5; }
+  else { tafArMax = 15; tafArMin = 11.5; }
+
+  let tafEnMax = 17.5, tafEnMin = 12;
+  if (tafEnLen < 160) { tafEnMax = 20; tafEnMin = 16; }
+  else if (tafEnLen < 380) { tafEnMax = 17.5; tafEnMin = 13.5; }
+  else { tafEnMax = 14; tafEnMin = 11; }
+
+  fitElement(ayahEl, ayahMin, ayahMax, 1);
+  fitElement(trEl, trMin, trMax, 0.5);
+  fitElement(tafArEl, tafArMin, tafArMax, 0.5);
+  fitElement(tafEnEl, tafEnMin, tafEnMax, 0.5);
+}
+
+// 24-hour persistent storage check
+function getStoredCache(key) {
+  try {
+    const raw = localStorage.getItem('quran24_' + key);
+    if (!raw) return null;
+    const item = JSON.parse(raw);
+    if (Date.now() - item.time < 24 * 60 * 60 * 1000) {
+      return item.data;
+    }
+  } catch {}
+  return null;
+}
+
+function setStoredCache(key, data) {
+  try {
+    localStorage.setItem('quran24_' + key, JSON.stringify({ time: Date.now(), data }));
+  } catch {}
+}
+
+async function loadCapitalsPage() {
+  try {
+    const cacheKey = `capitals_p${state.page}`;
+    let data = getStoredCache(cacheKey);
+
+    if (!data) {
+      const r = await fetch(`/api/capitals?page=${state.page}&size=${state.perPage}`, { cache: 'default' });
+      if (r.ok) {
+        data = await r.json();
+        setStoredCache(cacheKey, data);
+      }
+    }
+
+    if (data && data.cities && data.cities.length > 0) {
+      state.cityData = data.cities;
+      state.totalPages = data.totalPages || 39;
+      renderCities(state.cityData);
+    } else {
+      renderCities(defaultCities);
+    }
+  } catch {
+    renderCities(defaultCities);
+  }
+}
+
+async function loadSurahs() {
+  try {
+    const cached = getStoredCache('surahs_list');
+    if (cached && Array.isArray(cached) && cached.length === 114) {
+      state.surahs = cached;
+      return;
+    }
+    const r = await fetch('/api/surahs');
+    if (r.ok) {
+      state.surahs = await r.json();
+      setStoredCache('surahs_list', state.surahs);
+    }
+  } catch {}
+}
+
+function getAudioUrl(surah, ayah) {
+  const s = String(surah).padStart(3, '0');
+  const a = String(ayah).padStart(3, '0');
+  return `https://everyayah.com/data/Alafasy_128kbps/${s}${a}.mp3`;
+}
+
+function initAudio() {
+  if (state.audio) return state.audio;
+  const a = new Audio();
+  a.preload = 'auto';
+
+  a.addEventListener('play', () => {
+    state.isPlaying = true;
+    const pill = document.querySelector('.reciter-pill');
+    if (pill) {
+      pill.classList.remove('paused');
+      pill.classList.add('playing');
+    }
+  });
+
+  a.addEventListener('pause', () => {
+    state.isPlaying = false;
+    const pill = document.querySelector('.reciter-pill');
+    if (pill) {
+      pill.classList.remove('playing');
+      pill.classList.add('paused');
+    }
+  });
+
+  a.addEventListener('ended', () => {
+    onAyahFinished();
+  });
+
+  a.addEventListener('error', e => {
+    console.warn('Audio recitation notice, scheduling fallback advancement:', e);
+    scheduleFallbackAdvance(8000);
+  });
+
+  state.audio = a;
+  return a;
+}
+
+function scheduleFallbackAdvance(ms = 12000) {
+  if (state.fallbackTimer) clearTimeout(state.fallbackTimer);
+  state.fallbackTimer = setTimeout(() => {
+    onAyahFinished();
+  }, ms);
+}
+
+function onAyahFinished() {
+  if (state.fallbackTimer) {
+    clearTimeout(state.fallbackTimer);
+    state.fallbackTimer = null;
+  }
+
+  // In QA test mode, keep verse static
+  if (state.isQa) return;
+
+  advanceToNextAyah();
+}
+
+function advanceToNextAyah() {
+  const surahMeta = state.surahs.find(s => s.number === state.currentSurah);
+  const maxAyahs = surahMeta ? surahMeta.ayahs : (state.quran?.totalAyahs || 286);
+
+  if (state.currentAyah < maxAyahs) {
+    state.currentAyah++;
+  } else {
+    if (state.currentSurah < 114) {
+      state.currentSurah++;
+      state.currentAyah = 1;
+    } else {
+      // Loop complete Quran continuously 24/7
+      state.currentSurah = 1;
+      state.currentAyah = 1;
+    }
+  }
+
+  setStoredCache('current_position', { surah: state.currentSurah, ayah: state.currentAyah });
+  loadQuranVerse(state.currentSurah, state.currentAyah);
+}
+
+function playRecitation(q) {
+  if (state.isQa) return;
+  const audio = initAudio();
+  const audioUrl = q.audioUrl || getAudioUrl(q.surah, q.ayah);
+
+  if (state.fallbackTimer) {
+    clearTimeout(state.fallbackTimer);
+    state.fallbackTimer = null;
+  }
+
+  // Safety fallback timer based on text length to prevent any broadcast hang
+  const wordCount = (q.arabic || '').split(/\s+/).length;
+  const estimatedSeconds = Math.max(8, Math.min(180, wordCount * 2.5 + 4));
+  scheduleFallbackAdvance(estimatedSeconds * 1000);
+
+  audio.src = audioUrl;
+  const playPromise = audio.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      // Recitation audio playing smoothly
+    }).catch(err => {
+      // In case unmuted autoplay was blocked without user gesture
+      console.warn('Autoplay waiting for user gesture or headless flag:', err.message);
+      const pill = document.querySelector('.reciter-pill');
+      if (pill) {
+        pill.classList.remove('playing');
+        pill.classList.add('paused');
+      }
+    });
+  }
+}
+
+function preloadNextAyah(surah, ayah) {
+  const surahMeta = state.surahs.find(s => s.number === surah);
+  const maxAyahs = surahMeta ? surahMeta.ayahs : (state.quran?.totalAyahs || 286);
+  let nextSurah = surah;
+  let nextAyah = ayah + 1;
+  if (nextAyah > maxAyahs) {
+    nextSurah = surah < 114 ? surah + 1 : 1;
+    nextAyah = 1;
+  }
+
+  // Pre-fetch API into cache
+  fetch(`/api/quran?surah=${nextSurah}&ayah=${nextAyah}`, { cache: 'default' })
+    .then(r => r.json())
+    .then(data => {
+      if (data) setStoredCache(`quran_s${nextSurah}_a${nextAyah}`, data);
+    })
+    .catch(() => {});
+
+  // Pre-load audio track into browser buffer
+  const nextAudio = new Audio();
+  nextAudio.preload = 'auto';
+  nextAudio.src = getAudioUrl(nextSurah, nextAyah);
+}
+
+async function loadQuranVerse(surah, ayah) {
+  if (!surah) surah = state.currentSurah;
+  if (!ayah) ayah = state.currentAyah;
+
+  try {
+    const cacheKey = `quran_s${surah}_a${ayah}`;
+    let q = getStoredCache(cacheKey);
+
+    if (!q) {
+      const r = await fetch(`/api/quran?surah=${surah}&ayah=${ayah}`, { cache: 'default' });
+      if (r.ok) {
+        q = await r.json();
+        setStoredCache(cacheKey, q);
+      }
+    }
+
+    if (q) {
+      state.quran = q;
+      state.currentSurah = q.surah || surah;
+      state.currentAyah = q.ayah || ayah;
+
+      if ($('ayah-ar')) $('ayah-ar').textContent = q.arabic || '';
+      if ($('ayah-en')) $('ayah-en').textContent = q.translation || '';
+      if ($('tafsir-ar')) $('tafsir-ar').textContent = q.tafsirAr || '';
+      if ($('tafsir-en')) $('tafsir-en').textContent = q.tafsirEn || '';
+      
+      // Update metadata in bottom cards
+      if ($('meta-surah-title')) {
+        const rev = q.revelationTypeAr || 'مَدَنِيَّة';
+        const sName = q.surahArabic || 'سُورَةُ البَقَرَةِ';
+        $('meta-surah-title').innerHTML = `${sName} <span class="surah-index">(${q.surah || surah})</span> <span class="revelation-tag">${rev}</span>`;
+      }
+      if ($('meta-ayah-num')) $('meta-ayah-num').textContent = q.ayah || ayah;
+      if ($('meta-total-ayahs')) $('meta-total-ayahs').textContent = q.totalAyahs || 286;
+      if ($('meta-tafsir-ar')) $('meta-tafsir-ar').textContent = `التفسير: ${q.tafsirNameAr || 'المُيَسَّر'}`;
+      if ($('meta-tafsir-en')) $('meta-tafsir-en').textContent = `Tafsir: ${q.tafsirNameEn || 'Al-Muyassar'}`;
+
+      // Synchronize audio recitation
+      playRecitation(q);
+
+      // Preload next ayah
+      preloadNextAyah(state.currentSurah, state.currentAyah);
+    }
+  } catch (e) {
+    console.error('Quran verse load error', e);
+    scheduleFallbackAdvance(10000);
+  } finally {
+    requestAnimationFrame(fitAllContent);
+  }
+}
+
+function tickClocks() {
+  document.querySelectorAll('[data-tz]').forEach(el => {
+    const tz = el.dataset.tz;
+    if (tz) el.textContent = formatClockTime(tz);
+  });
+}
+
+async function init() {
+  // 1. Initial immediate render from pre-loaded reference data (zero layout shift)
+  renderCities(defaultCities);
+
+  // 2. Load Surahs canonical metadata (1-114)
+  await loadSurahs();
+
+  // 3. Determine starting surah & ayah
+  const params = new URLSearchParams(location.search);
+  const qSurah = parseInt(params.get('surah'), 10);
+  const qAyah = parseInt(params.get('ayah'), 10);
+
+  if (state.isQa) {
+    state.currentSurah = 2;
+    state.currentAyah = 282;
+  } else if (qSurah && qAyah) {
+    state.currentSurah = qSurah;
+    state.currentAyah = qAyah;
+  } else {
+    const saved = getStoredCache('current_position');
+    if (saved && saved.surah && saved.ayah) {
+      state.currentSurah = saved.surah;
+      state.currentAyah = saved.ayah;
+    } else {
+      state.currentSurah = 1;
+      state.currentAyah = 1;
+    }
+  }
+
+  // 4. Fetch dynamic data & start Quran verse
+  loadCapitalsPage();
+  loadQuranVerse(state.currentSurah, state.currentAyah);
+
+  // 5. Local clock ticks (no network request)
+  setInterval(tickClocks, 1000);
+
+  // 6. Smooth country rotation every 35 seconds (cycling all 195 countries)
+  setInterval(() => {
+    state.rotationLeft--;
+    if (state.rotationLeft <= 0) {
+      state.rotationLeft = state.rotationSeconds;
+      state.page = (state.page + 1) % state.totalPages;
+      loadCapitalsPage();
+    }
+  }, 1000);
+
+  // 7. Dynamic auto-fit on window resize
+  window.addEventListener('resize', () => requestAnimationFrame(fitAllContent), { passive: true });
+
+  // 8. User click unpause handler (if browser required user gesture)
+  window.addEventListener('click', () => {
+    if (state.audio && state.audio.paused && !state.isQa) {
+      state.audio.play().catch(() => {});
+    }
+  }, { passive: true });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
