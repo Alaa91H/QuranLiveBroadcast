@@ -267,7 +267,7 @@ async function getTafsir(verseKey) {
 const surahsFile = path.join(ROOT, 'surahs.json');
 const surahsData = fs.existsSync(surahsFile) ? JSON.parse(fs.readFileSync(surahsFile, 'utf8')) : [];
 
-async function quranVerse(surah = 2, ayah = 255) {
+async function quranVerse(surah = 1, ayah = 1) {
   const surahMeta = surahsData.find(s => s.number === surah) || {
     number: surah,
     nameAr: 'سُورَةُ البَقَرَةِ',
@@ -404,7 +404,7 @@ const routes = {
   '/api/health': async () => ({ ok: true, service: 'quran-24-7-web', now: new Date().toISOString(), capitals: capitals.length, surahs: surahsData.length }),
   '/api/capitals': capitalsPage,
   '/api/surahs': async () => surahsData,
-  '/api/quran': async url => quranVerse(Number(url.searchParams.get('surah') || 2), Number(url.searchParams.get('ayah') || 255)),
+  '/api/quran': async url => quranVerse(Number(url.searchParams.get('surah') || 1), Number(url.searchParams.get('ayah') || 1)),
   '/api/city': async url => {
     const code = (url.searchParams.get('code') || 'TR').toUpperCase();
     const found = capitals.find(x => x.code === code);

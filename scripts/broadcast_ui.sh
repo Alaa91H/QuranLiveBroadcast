@@ -61,9 +61,11 @@ start_browser() {
       --no-default-browser-check \
       --hide-crash-restore-bubble \
       --disable-features=Translate,TranslateUI \
+      --autoplay-policy=no-user-gesture-required \
+      --allow-running-insecure-content \
+      --disable-component-update \
       --kiosk \
       --window-size="${STREAM_WIDTH},${STREAM_HEIGHT}" \
-      --autoplay-policy=no-user-gesture-required \
       --js-flags="--max-old-space-size=${CHROME_MEM_MB}" \
       --app="http://127.0.0.1:$PORT/" >"$LOG_DIR/chromium.log" 2>&1 & echo $! >"$CHROME_PIDFILE"
     sleep 3

@@ -190,8 +190,9 @@ function getCityDates(tz) {
   try {
     const d = new Date();
     const greg = new Intl.DateTimeFormat('ar', { day: 'numeric', month: 'long', year: 'numeric', timeZone: tz || 'UTC' }).format(d);
-    const hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric', timeZone: tz || 'UTC' }).format(d);
-    return { greg, hijri: hijri + ' هـ' };
+    let hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric', timeZone: tz || 'UTC' }).format(d);
+    hijri = hijri.replace(/\s*هـ?\s*$/g, '').trim() + ' هـ';
+    return { greg, hijri };
   } catch {
     return { greg: '26 فبراير 2025 م', hijri: '12 شعبان 1447 هـ' };
   }
@@ -433,8 +434,11 @@ function getAudioUrl(surah, ayah) {
 
 function initAudio() {
   if (state.audio) return state.audio;
-  const a = new Audio();
+  const a = document.getElementById('quran-audio') || new Audio();
   a.preload = 'auto';
+  a.autoplay = true;
+  a.muted = false;
+  a.volume = 1.0;
 
   a.addEventListener('play', () => {
     state.isPlaying = true;
@@ -459,8 +463,8 @@ function initAudio() {
   });
 
   a.addEventListener('error', e => {
-    console.warn('Audio recitation notice, scheduling fallback advancement:', e);
-    scheduleFallbackAdvance(8000);
+    console.warn('Audio recitation load notice, advancing via fallback:', e);
+    scheduleFallbackAdvance(3500);
   });
 
   state.audio = a;
@@ -497,7 +501,7 @@ function advanceToNextAyah() {
       state.currentSurah++;
       state.currentAyah = 1;
     } else {
-      // Loop complete Quran continuously 24/7
+      // Loop complete Quran continuously 24/7 (1:1 to 114:6)
       state.currentSurah = 1;
       state.currentAyah = 1;
     }
@@ -519,22 +523,21 @@ function playRecitation(q) {
 
   // Safety fallback timer based on text length to prevent any broadcast hang
   const wordCount = (q.arabic || '').split(/\s+/).length;
-  const estimatedSeconds = Math.max(8, Math.min(180, wordCount * 2.5 + 4));
+  const estimatedSeconds = Math.max(7, Math.min(240, wordCount * 2.8 + 4));
   scheduleFallbackAdvance(estimatedSeconds * 1000);
 
   audio.src = audioUrl;
+  audio.muted = false;
+  audio.volume = 1.0;
+  
   const playPromise = audio.play();
   if (playPromise !== undefined) {
     playPromise.then(() => {
       // Recitation audio playing smoothly
     }).catch(err => {
-      // In case unmuted autoplay was blocked without user gesture
-      console.warn('Autoplay waiting for user gesture or headless flag:', err.message);
-      const pill = document.querySelector('.reciter-pill');
-      if (pill) {
-        pill.classList.remove('playing');
-        pill.classList.add('paused');
-      }
+      console.warn('Autoplay waiting for unmuted policy:', err.message);
+      audio.muted = false;
+      audio.play().catch(() => {});
     });
   }
 }
