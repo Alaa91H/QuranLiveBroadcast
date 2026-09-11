@@ -52,7 +52,7 @@ start_browser() {
       --disable-gpu \
       --disable-dev-shm-usage \
       --disable-software-rasterizer \
-      --single-process \
+      --renderer-process-limit=1 \
       --disable-extensions \
       --disable-background-networking \
       --disable-sync \
