@@ -710,3 +710,246 @@ html, body {
   font-size: 17px;
   text-shadow: 0 0 8px rgba(245, 214, 122, 0.4);
 }
+
+/* =========================================
+   RESPONSIVE OPTIMIZATION: 720p HD ECO PROFILE
+   (Ensures all 6 city cards & bottom pills fit perfectly without overflow)
+   ========================================= */
+@media (max-height: 800px) {
+  .broadcast-container {
+    grid-template-columns: minmax(0, 1fr) 440px;
+  }
+
+  /* Left Quran Stage scaling */
+  .quran-stage {
+    padding: 10px 24px 76px;
+  }
+
+  .ayah-ar {
+    font-size: 42px;
+    line-height: 1.38;
+    margin-bottom: 6px;
+    max-height: 230px;
+  }
+
+  .ayah-translation-en {
+    font-size: 17px;
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .tafsir-container {
+    max-width: 780px;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .tafsir-card {
+    padding: 6px 14px;
+    border-radius: 12px;
+  }
+
+  .tafsir-text {
+    font-size: 14.5px;
+    line-height: 1.45;
+  }
+
+  /* Floating Bottom Pills */
+  .floating-pills-container {
+    bottom: 14px;
+    gap: 12px;
+  }
+
+  .glass-pill {
+    height: 44px;
+    border-radius: 26px;
+  }
+
+  .surah-ayah-pill {
+    padding: 4px 14px 4px 10px;
+    gap: 8px;
+  }
+
+  .pill-icon-circle {
+    width: 30px;
+    height: 30px;
+  }
+
+  .surah-title {
+    font-size: 13.5px;
+  }
+
+  .surah-index {
+    font-size: 11px;
+  }
+
+  .ayah-meta {
+    font-size: 9.5px;
+  }
+
+  .gold-num {
+    font-size: 11px;
+  }
+
+  .tafsir-info-pill {
+    padding: 4px 14px 4px 10px;
+    gap: 8px;
+  }
+
+  .tafsir-title-ar {
+    font-size: 12px;
+  }
+
+  .tafsir-title-en {
+    font-size: 8.5px;
+  }
+
+  .reciter-pill {
+    padding: 4px 14px 4px 8px;
+    gap: 10px;
+  }
+
+  .reciter-avatar-box {
+    width: 32px;
+    height: 32px;
+  }
+
+  .reciter-name-ar {
+    font-size: 12px;
+  }
+
+  .reciter-name-en {
+    font-size: 8.5px;
+  }
+
+  .wave-equalizer {
+    height: 18px;
+    gap: 2px;
+  }
+
+  .wave-equalizer span {
+    width: 2.5px;
+  }
+
+  /* Right Panel & 6 City Cards */
+  .world-panel {
+    padding: 5px 7px;
+  }
+
+  .city-cards-list {
+    gap: 4px;
+  }
+
+  .city-card {
+    padding: 4px 8px 3px;
+    border-radius: 10px;
+  }
+
+  .subcards-row {
+    height: 35px;
+    gap: 4px;
+  }
+
+  .meta-subcard {
+    padding: 2px 5px;
+    border-radius: 7px;
+  }
+
+  .time-day-subcard {
+    min-width: 65px;
+  }
+
+  .sc-day {
+    font-size: 9.5px;
+  }
+
+  .sc-time {
+    font-size: 12.5px;
+  }
+
+  .dates-subcard {
+    min-width: 95px;
+  }
+
+  .sc-hijri {
+    font-size: 9px;
+  }
+
+  .sc-greg {
+    font-size: 8px;
+  }
+
+  .weather-subcard {
+    min-width: 95px;
+    gap: 4px;
+  }
+
+  .sc-hi {
+    font-size: 9px;
+  }
+
+  .sc-lo {
+    font-size: 9px;
+  }
+
+  .sc-temp-group {
+    gap: 3px;
+    padding-right: 4px;
+  }
+
+  .sc-wx-icon {
+    font-size: 15px;
+  }
+
+  .sc-temp-val {
+    font-size: 13.5px;
+  }
+
+  .identity-subcard {
+    gap: 5px;
+  }
+
+  .city-flag-box {
+    width: 38px;
+    height: 25px;
+    border-radius: 3px;
+    padding: 1px;
+  }
+
+  .city-name {
+    font-size: 13.5px;
+  }
+
+  .city-country {
+    font-size: 9.5px;
+  }
+
+  .prayer-times-row {
+    height: 52px;
+    min-height: 48px;
+    gap: 3px;
+    margin-top: 3px;
+  }
+
+  .p-col {
+    padding: 3px 1px;
+    border-radius: 7px;
+  }
+
+  .p-name {
+    font-size: 10px;
+    margin-bottom: 1px;
+  }
+
+  .p-time {
+    font-size: 12.5px;
+  }
+
+  .p-col.active-next .p-name {
+    font-size: 10.5px;
+  }
+
+  .p-col.active-next .p-time {
+    font-size: 13.5px;
+  }
+}

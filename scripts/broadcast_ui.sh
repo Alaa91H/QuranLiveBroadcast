@@ -44,8 +44,10 @@ start_x() {
 # 4. Start Browser (Chromium) optimized for low memory and unmuted autoplay
 start_browser() {
   if ! kill -0 "$(cat "$CHROME_PIDFILE" 2>/dev/null)" 2>/dev/null; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Chromium (${STREAM_WIDTH}x${STREAM_HEIGHT}, memory cap ${CHROME_MEM_MB}MB)..."
-    DISPLAY=":$DISPLAY_NUM" PULSE_SINK=quran_sink chromium \
+    local BROWSER_BIN
+    BROWSER_BIN="$(command -v google-chrome || command -v chromium-browser || command -v chromium || echo "chromium")"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Browser ($BROWSER_BIN, ${STREAM_WIDTH}x${STREAM_HEIGHT}, memory cap ${CHROME_MEM_MB}MB)..."
+    DISPLAY=":$DISPLAY_NUM" PULSE_SINK=quran_sink "$BROWSER_BIN" \
       --no-sandbox \
       --disable-gpu \
       --disable-dev-shm-usage \
@@ -55,6 +57,10 @@ start_browser() {
       --disable-background-networking \
       --disable-sync \
       --disable-default-apps \
+      --no-first-run \
+      --no-default-browser-check \
+      --hide-crash-restore-bubble \
+      --disable-features=Translate,TranslateUI \
       --kiosk \
       --window-size="${STREAM_WIDTH},${STREAM_HEIGHT}" \
       --autoplay-policy=no-user-gesture-required \
