@@ -33,18 +33,18 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting YouTube 24/7 stream: ${STREAM_WIDT
 
 while true; do
   # Determine audio input source: prefer synchronized PulseAudio virtual sink
-  AUDIO_INPUT_ARGS=(-f pulse -i "quran_sink.monitor")
+  AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -f pulse -i "quran_sink.monitor")
   if ! command -v pactl >/dev/null 2>&1 || ! pactl list short sources 2>/dev/null | grep -q "quran_sink.monitor"; then
     # Fallback to local audio loop or anullsrc if virtual sink is unavailable
     if [ -f "$RUNTIME/audio_playlist.txt" ] && [ -s "$RUNTIME/audio_playlist.txt" ]; then
-      AUDIO_INPUT_ARGS=(-re -stream_loop -1 -f concat -safe 0 -i "$RUNTIME/audio_playlist.txt")
+      AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -re -stream_loop -1 -f concat -safe 0 -i "$RUNTIME/audio_playlist.txt")
     else
-      AUDIO_INPUT_ARGS=(-f lavfi -i "anullsrc=r=${AUDIO_SAMPLERATE}:cl=stereo")
+      AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -f lavfi -i "anullsrc=r=${AUDIO_SAMPLERATE}:cl=stereo")
     fi
   fi
 
   ffmpeg -hide_banner -loglevel warning -nostdin \
-    -f x11grab -draw_mouse 0 -framerate "$STREAM_FPS" -video_size "${STREAM_WIDTH}x${STREAM_HEIGHT}" -i ":$DISPLAY_NUM.0" \
+    -thread_queue_size 1024 -f x11grab -draw_mouse 0 -framerate "$STREAM_FPS" -video_size "${STREAM_WIDTH}x${STREAM_HEIGHT}" -i ":$DISPLAY_NUM.0" \
     "${AUDIO_INPUT_ARGS[@]}" \
     -map 0:v:0 -map 1:a:0 \
     -vf "format=yuv420p" \
@@ -52,6 +52,7 @@ while true; do
     -b:v "$VIDEO_BITRATE" -maxrate "$MAX_BITRATE" -bufsize "$BUF_SIZE" \
     -g "$((STREAM_FPS * 2))" -keyint_min "$STREAM_FPS" -r "$STREAM_FPS" \
     -c:a aac -b:a "$AUDIO_BITRATE" -ar "$AUDIO_SAMPLERATE" -ac 2 \
+    -flvflags no_duration_filesize \
     -f flv "$RTMP_TARGET" 2>&1 | tee -a "$LOG"
 
   EXIT_CODE=$?
