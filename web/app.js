@@ -341,25 +341,25 @@ function fitAllContent() {
 
   // Dynamic typography range based on text volume
   let ayahMax = 58, ayahMin = 22;
-  if (arLen < 70) { ayahMax = 64; ayahMin = 48; }
-  else if (arLen < 180) { ayahMax = 56; ayahMin = 36; }
-  else if (arLen < 380) { ayahMax = 44; ayahMin = 28; }
-  else { ayahMax = 28; ayahMin = 18; } // Longest verse 2:282
+  if (arLen < 70) { ayahMax = 62; ayahMin = 46; }
+  else if (arLen < 180) { ayahMax = 52; ayahMin = 34; }
+  else if (arLen < 380) { ayahMax = 40; ayahMin = 26; }
+  else { ayahMax = 26; ayahMin = 17; } // Longest verse 2:282
 
   let trMax = 23, trMin = 14;
-  if (trLen < 120) { trMax = 26; trMin = 20; }
-  else if (trLen < 320) { trMax = 22; trMin = 16; }
-  else { trMax = 17.5; trMin = 12.5; }
+  if (trLen < 120) { trMax = 25; trMin = 19; }
+  else if (trLen < 320) { trMax = 21; trMin = 15; }
+  else { trMax = 17; trMin = 12.5; }
 
   let tafArMax = 19, tafArMin = 13;
-  if (tafArLen < 160) { tafArMax = 22; tafArMin = 17; }
-  else if (tafArLen < 380) { tafArMax = 19; tafArMin = 14.5; }
-  else { tafArMax = 15; tafArMin = 11.5; }
+  if (tafArLen < 160) { tafArMax = 21; tafArMin = 16; }
+  else if (tafArLen < 380) { tafArMax = 18.5; tafArMin = 14; }
+  else { tafArMax = 14.5; tafArMin = 11.5; }
 
   let tafEnMax = 17.5, tafEnMin = 12;
-  if (tafEnLen < 160) { tafEnMax = 20; tafEnMin = 16; }
-  else if (tafEnLen < 380) { tafEnMax = 17.5; tafEnMin = 13.5; }
-  else { tafEnMax = 14; tafEnMin = 11; }
+  if (tafEnLen < 160) { tafEnMax = 19.5; tafEnMin = 15; }
+  else if (tafEnLen < 380) { tafEnMax = 17; tafEnMin = 13; }
+  else { tafEnMax = 13.5; tafEnMin = 11; }
 
   fitElement(ayahEl, ayahMin, ayahMax, 1);
   fitElement(trEl, trMin, trMax, 0.5);
@@ -429,7 +429,9 @@ async function loadSurahs() {
 function getAudioUrl(surah, ayah) {
   const s = String(surah).padStart(3, '0');
   const a = String(ayah).padStart(3, '0');
-  return `https://everyayah.com/data/Alafasy_128kbps/${s}${a}.mp3`;
+  const cached = getStoredCache(`quran_s${surah}_a${ayah}`);
+  if (cached && cached.audioUrl) return cached.audioUrl;
+  return `/assets/audio/${s}${a}.mp3`;
 }
 
 function initAudio() {
@@ -463,6 +465,15 @@ function initAudio() {
   });
 
   a.addEventListener('error', e => {
+    // Seamless fallback to EveryAyah CDN if local file is not yet cached
+    if (a.src && a.src.includes('/assets/audio/')) {
+      const match = a.src.match(/(\d{6})\.mp3/);
+      if (match) {
+        a.src = `https://everyayah.com/data/Alafasy_128kbps/${match[1]}.mp3`;
+        a.play().catch(() => {});
+        return;
+      }
+    }
     console.warn('Audio recitation load notice, advancing via fallback:', e);
     scheduleFallbackAdvance(3500);
   });
@@ -542,28 +553,38 @@ function playRecitation(q) {
   }
 }
 
-function preloadNextAyah(surah, ayah) {
-  const surahMeta = state.surahs.find(s => s.number === surah);
-  const maxAyahs = surahMeta ? surahMeta.ayahs : (state.quran?.totalAyahs || 286);
-  let nextSurah = surah;
-  let nextAyah = ayah + 1;
-  if (nextAyah > maxAyahs) {
-    nextSurah = surah < 114 ? surah + 1 : 1;
-    nextAyah = 1;
+function preloadNextAyah(surah, ayah, count = 3) {
+  let curS = surah;
+  let curA = ayah;
+
+  for (let step = 1; step <= count; step++) {
+    const surahMeta = state.surahs.find(s => s.number === curS);
+    const maxAyahs = surahMeta ? surahMeta.ayahs : (state.quran?.totalAyahs || 286);
+    curA++;
+    if (curA > maxAyahs) {
+      curS = curS < 114 ? curS + 1 : 1;
+      curA = 1;
+    }
+
+    const sTarget = curS;
+    const aTarget = curA;
+    const cacheKey = `quran_s${sTarget}_a${aTarget}`;
+
+    // Pre-fetch API into cache
+    if (!getStoredCache(cacheKey)) {
+      fetch(`/api/quran?surah=${sTarget}&ayah=${aTarget}`, { cache: 'default' })
+        .then(r => r.json())
+        .then(data => {
+          if (data) setStoredCache(cacheKey, data);
+        })
+        .catch(() => {});
+    }
+
+    // Pre-load audio track into browser buffer
+    const nextAudio = new Audio();
+    nextAudio.preload = 'auto';
+    nextAudio.src = getAudioUrl(sTarget, aTarget);
   }
-
-  // Pre-fetch API into cache
-  fetch(`/api/quran?surah=${nextSurah}&ayah=${nextAyah}`, { cache: 'default' })
-    .then(r => r.json())
-    .then(data => {
-      if (data) setStoredCache(`quran_s${nextSurah}_a${nextAyah}`, data);
-    })
-    .catch(() => {});
-
-  // Pre-load audio track into browser buffer
-  const nextAudio = new Audio();
-  nextAudio.preload = 'auto';
-  nextAudio.src = getAudioUrl(nextSurah, nextAyah);
 }
 
 async function loadQuranVerse(surah, ayah) {
@@ -606,8 +627,8 @@ async function loadQuranVerse(surah, ayah) {
       // Synchronize audio recitation
       playRecitation(q);
 
-      // Preload next ayah
-      preloadNextAyah(state.currentSurah, state.currentAyah);
+      // Preload next 3 upcoming ayahs
+      preloadNextAyah(state.currentSurah, state.currentAyah, 3);
     }
   } catch (e) {
     console.error('Quran verse load error', e);

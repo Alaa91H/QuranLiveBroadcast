@@ -267,6 +267,35 @@ async function getTafsir(verseKey) {
 const surahsFile = path.join(ROOT, 'surahs.json');
 const surahsData = fs.existsSync(surahsFile) ? JSON.parse(fs.readFileSync(surahsFile, 'utf8')) : [];
 
+const AUDIO_DIR = path.join(ROOT, 'assets', 'audio');
+try { fs.mkdirSync(AUDIO_DIR, { recursive: true }); } catch {}
+
+function getAyahAudioUrl(surah, ayah) {
+  const s = String(surah).padStart(3, '0');
+  const a = String(ayah).padStart(3, '0');
+  const fileName = `${s}${a}.mp3`;
+  const localPath = path.join(AUDIO_DIR, fileName);
+  if (fs.existsSync(localPath) && fs.statSync(localPath).size > 1000) {
+    return `/assets/audio/${fileName}`;
+  }
+  // Schedule background download if not yet cached on disk
+  cacheAudioInBackground(fileName, localPath);
+  return `https://everyayah.com/data/Alafasy_128kbps/${fileName}`;
+}
+
+function cacheAudioInBackground(fileName, localPath) {
+  if (OFFLINE) return;
+  const url = `https://everyayah.com/data/Alafasy_128kbps/${fileName}`;
+  fetch(url, { headers: { 'User-Agent': 'QuranLiveBroadcast/3.0' } })
+    .then(async r => {
+      if (r.ok) {
+        const buf = Buffer.from(await r.arrayBuffer());
+        fs.writeFileSync(localPath, buf);
+      }
+    })
+    .catch(() => {});
+}
+
 async function quranVerse(surah = 1, ayah = 1) {
   const surahMeta = surahsData.find(s => s.number === surah) || {
     number: surah,
@@ -302,7 +331,7 @@ async function quranVerse(surah = 1, ayah = 1) {
         : 'The verse affirms that Allah alone is the true God worthy of worship, possessing complete everlasting life, and sustaining all creation without fatigue or slumber.',
       tafsirNameAr: 'التفسير الميسر',
       tafsirNameEn: 'Al-Muyassar',
-      audioUrl: `https://everyayah.com/data/Alafasy_128kbps/${String(surah).padStart(3, '0')}${String(ayah).padStart(3, '0')}.mp3`
+      audioUrl: getAyahAudioUrl(surah, ayah)
     };
   }
 
@@ -345,7 +374,7 @@ async function quranVerse(surah = 1, ayah = 1) {
       tafsirEn,
       tafsirNameAr: 'التفسير الميسر',
       tafsirNameEn: 'Al-Muyassar',
-      audioUrl: `https://everyayah.com/data/Alafasy_128kbps/${String(surah).padStart(3, '0')}${String(ayah).padStart(3, '0')}.mp3`
+      audioUrl: getAyahAudioUrl(surah, ayah)
     };
   });
 }
@@ -429,9 +458,17 @@ const server = http.createServer(async (req, res) => {
       '.json': 'application/json; charset=utf-8',
       '.jpg': 'image/jpeg',
       '.png': 'image/png',
-      '.svg': 'image/svg+xml'
+      '.svg': 'image/svg+xml',
+      '.woff2': 'font/woff2',
+      '.woff': 'font/woff',
+      '.ttf': 'font/ttf',
+      '.mp3': 'audio/mpeg'
     };
-    res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream', 'Cache-Control': ext === '.json' ? 'no-cache' : 'public, max-age=300' });
+    const isImmutable = ['.woff2', '.woff', '.ttf', '.mp3', '.jpg', '.png'].includes(ext);
+    res.writeHead(200, {
+      'Content-Type': types[ext] || 'application/octet-stream',
+      'Cache-Control': ext === '.json' ? 'no-cache' : (isImmutable ? 'public, max-age=86400' : 'public, max-age=300')
+    });
     fs.createReadStream(fp).pipe(res);
   } catch (e) {
     console.error(e);

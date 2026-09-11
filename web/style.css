@@ -88,13 +88,16 @@ html, body {
   font-family: 'Amiri', serif;
   font-size: 58px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 2.1;
   color: #ffffff;
   text-shadow: 0 4px 28px rgba(0, 0, 0, 0.75);
-  margin-bottom: 10px;
-  letter-spacing: 0.5px;
-  transition: font-size 0.2s ease;
-  max-height: 320px;
+  margin-bottom: 12px;
+  letter-spacing: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+  text-align: center;
+  max-height: 330px;
   overflow: hidden;
   width: 100%;
 }
@@ -137,33 +140,33 @@ html, body {
   position: relative;
   border-radius: 18px;
   padding: 12px 26px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   min-height: 0;
   overflow: hidden;
 }
 
 .tafsir-card-ar {
-  background: rgba(2, 18, 30, 0.78);
-  border: 1px solid rgba(212, 175, 55, 0.32);
+  background: linear-gradient(135deg, rgba(3, 20, 32, 0.93) 0%, rgba(1, 12, 22, 0.97) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.38);
   text-align: right;
   direction: rtl;
 }
 
 .tafsir-card-en {
-  background: rgba(2, 18, 30, 0.68);
-  border: 1px solid rgba(212, 175, 55, 0.22);
+  background: linear-gradient(135deg, rgba(3, 20, 32, 0.88) 0%, rgba(1, 12, 22, 0.94) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.28);
   text-align: left;
   direction: ltr;
 }
 
 .tafsir-text {
   font-size: 19px;
-  line-height: 1.65;
+  line-height: 1.75;
   color: #f8fafc;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
-  transition: font-size 0.2s ease;
   margin: 0;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .tafsir-card-en .tafsir-text {
@@ -190,11 +193,10 @@ html, body {
 }
 
 .glass-pill {
-  background: rgba(3, 18, 30, 0.86);
-  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(5, 24, 38, 0.94) 0%, rgba(2, 14, 24, 0.97) 100%);
   border: 1.5px solid rgba(212, 175, 55, 0.45);
   border-radius: 40px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   direction: ltr;
@@ -451,14 +453,13 @@ html, body {
 }
 
 .meta-subcard {
-  background: rgba(3, 20, 32, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(5, 24, 38, 0.88) 0%, rgba(2, 16, 26, 0.94) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 9px;
   padding: 3px 6px;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   height: 100%;
 }
 

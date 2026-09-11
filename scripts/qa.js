@@ -77,13 +77,21 @@ const scripts = [
   'watchdog.sh',
   'maintenance.sh',
   'setup_cron.sh',
-  'control.sh'
+  'control.sh',
+  'download_all_recitations.sh',
+  'download_all_recitations.js'
 ];
 for (const script of scripts) {
   const p = path.join(ROOT, 'scripts', script);
   assert(fs.existsSync(p), `Required script scripts/${script} missing`);
 }
-console.log('✓ Quality Gate 4: Autonomous shell scripts verified (adaptive profiles, watchdog, maintenance, cron).');
+
+// Validate offline assets (fonts and optimized background)
+assert(fs.existsSync(path.join(ROOT, 'web', 'assets', 'fonts', 'fonts.css')), 'Local fonts.css not found');
+const bgStat = fs.statSync(path.join(ROOT, 'web', 'assets', 'background.jpg'));
+assert(bgStat.size < 1.5 * 1024 * 1024, `Background image is too large (${(bgStat.size / 1024 / 1024).toFixed(2)}MB), expected < 1.5MB`);
+
+console.log('✓ Quality Gate 4: Autonomous scripts and offline assets verified (fonts, audio downloader, 1080p background).');
 
 // 5. Integration Test Web Server & APIs
 const port = 8899;
