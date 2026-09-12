@@ -29,29 +29,49 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Launching Quran UI environment with profile
 "$BASE_DIR/scripts/broadcast_ui.sh" >>"$LOG" 2>&1
 trap '"$BASE_DIR/scripts/stop_ui.sh" >/dev/null 2>&1 || true' EXIT INT TERM
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting YouTube 24/7 stream: ${STREAM_WIDTH}x${STREAM_HEIGHT} @ ${STREAM_FPS}fps (${VIDEO_BITRATE})..." | tee -a "$LOG"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting YouTube 24/7 stream: ${STREAM_WIDTH}x${STREAM_HEIGHT} @ ${STREAM_FPS}fps (${VIDEO_BITRATE}, audio: ${AUDIO_MODE})..." | tee -a "$LOG"
+
+# Extra 1-CPU x264 tuning (micro profile; empty elsewhere = preset defaults)
+X264_ARGS=()
+if [ -n "${X264_PARAMS:-}" ]; then
+  X264_ARGS=(-x264-params "$X264_PARAMS")
+fi
 
 while true; do
-  # Determine audio input source: prefer synchronized PulseAudio virtual sink
-  AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -f pulse -i "quran_sink.monitor")
-  if ! command -v pactl >/dev/null 2>&1 || ! pactl list short sources 2>/dev/null | grep -q "quran_sink.monitor"; then
-    # Fallback to local audio loop or anullsrc if virtual sink is unavailable
+  # Audio path selection (AUDIO_MODE=file keeps PulseAudio out of the loop):
+  # 1) "file": concat of local recitation mp3s, same surah 1..114 order the UI
+  #    plays, so display stays in sync (tiny drift possible; daily restart
+  #    resyncs). Browser is muted; no pulse sink is created or read.
+  # 2) "pulse": capture the browser via the quran_sink.monitor (default).
+  if [ "${AUDIO_MODE:-pulse}" = "file" ]; then
+    "$BASE_DIR/scripts/build_audio_playlist.sh" >>"$LOG" 2>&1 || true
     if [ -f "$RUNTIME/audio_playlist.txt" ] && [ -s "$RUNTIME/audio_playlist.txt" ]; then
-      AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -re -stream_loop -1 -f concat -safe 0 -i "$RUNTIME/audio_playlist.txt")
+      AUDIO_INPUT_ARGS=(-thread_queue_size 2048 -re -stream_loop -1 -f concat -safe 0 -i "$RUNTIME/audio_playlist.txt")
     else
-      AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -f lavfi -i "anullsrc=r=${AUDIO_SAMPLERATE}:cl=stereo")
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] WARNING: no local recitation audio yet, falling back to PulseAudio for this cycle..." | tee -a "$LOG"
+      AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -f pulse -i "quran_sink.monitor")
+    fi
+  else
+    AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -f pulse -i "quran_sink.monitor")
+    if ! command -v pactl >/dev/null 2>&1 || ! pactl list short sources 2>/dev/null | grep -q "quran_sink.monitor"; then
+      # Fallback to local audio loop or anullsrc if virtual sink is unavailable
+      if [ -f "$RUNTIME/audio_playlist.txt" ] && [ -s "$RUNTIME/audio_playlist.txt" ]; then
+        AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -re -stream_loop -1 -f concat -safe 0 -i "$RUNTIME/audio_playlist.txt")
+      else
+        AUDIO_INPUT_ARGS=(-thread_queue_size 1024 -f lavfi -i "anullsrc=r=${AUDIO_SAMPLERATE}:cl=stereo")
+      fi
     fi
   fi
 
   ffmpeg -hide_banner -loglevel warning -nostdin \
-    -thread_queue_size 1024 -f x11grab -draw_mouse 0 -framerate "$STREAM_FPS" -video_size "${STREAM_WIDTH}x${STREAM_HEIGHT}" -i ":$DISPLAY_NUM.0" \
+    -use_wallclock_as_timestamps 1 -thread_queue_size 1024 -f x11grab -draw_mouse 0 -framerate "$STREAM_FPS" -video_size "${STREAM_WIDTH}x${STREAM_HEIGHT}" -i ":$DISPLAY_NUM.0" \
     "${AUDIO_INPUT_ARGS[@]}" \
     -map 0:v:0 -map 1:a:0 \
     -vf "format=yuv420p" \
-    -c:v "$VCODEC" -preset "$FFMPEG_PRESET" -tune "$FFMPEG_TUNE" -threads "$FFMPEG_THREADS" \
+    -c:v "$VCODEC" -preset "$FFMPEG_PRESET" -tune "$FFMPEG_TUNE" -threads "$FFMPEG_THREADS" "${X264_ARGS[@]}" \
     -b:v "$VIDEO_BITRATE" -maxrate "$MAX_BITRATE" -bufsize "$BUF_SIZE" \
     -g "$((STREAM_FPS * 2))" -keyint_min "$STREAM_FPS" -r "$STREAM_FPS" \
-    -c:a aac -b:a "$AUDIO_BITRATE" -ar "$AUDIO_SAMPLERATE" -ac 2 \
+    -c:a aac -b:a "$AUDIO_BITRATE" -ar "$AUDIO_SAMPLERATE" -ac 2 -af "aresample=${AUDIO_SAMPLERATE}:async=1:first_pts=0" \
     -flvflags no_duration_filesize \
     -f flv "$RTMP_TARGET" 2>&1 | tee -a "$LOG"
 

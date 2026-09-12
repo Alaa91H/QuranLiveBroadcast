@@ -675,6 +675,8 @@ async function init() {
   }
 
   // 4. Fetch dynamic data & start Quran verse
+  // Clean recording mode (?clean=1): fullscreen Quran stage, side panel hidden
+  if (params.get('clean') === '1') document.body.classList.add('clean');
   loadCapitalsPage();
   loadQuranVerse(state.currentSurah, state.currentAyah);
 

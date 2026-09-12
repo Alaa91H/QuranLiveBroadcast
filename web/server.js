@@ -376,7 +376,9 @@ async function quranVerse(surah = 1, ayah = 1) {
       tafsirNameEn: 'Al-Muyassar',
       audioUrl: getAyahAudioUrl(surah, ayah)
     };
-  });
+  // Verse text/translations/tafsir are immutable: cache 30 days to cut data
+  // use. Dynamic data (prayer/weather, date-keyed or 24h TTL) is unaffected.
+  }, 30 * 24 * 60 * 60 * 1000);
 }
 
 function normalizeCapital(c) {

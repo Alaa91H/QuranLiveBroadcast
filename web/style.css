@@ -55,6 +55,14 @@ html, body {
   z-index: 2;
 }
 
+/* Clean recording mode (?clean=1): fullscreen Quran stage, no side panel */
+body.clean .broadcast-container {
+  grid-template-columns: minmax(0, 1fr);
+}
+body.clean .world-panel {
+  display: none;
+}
+
 /* =========================================
    LEFT PANEL: QURAN & TAFSIR STAGE
    ========================================= */
