@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Egress Probe (first boot)
+# Quran Live Stream — Egress Probe (first boot)
 # Estimates USABLE upload to the internet for bitrate capping: median of 3x5MB
 # POSTs to the nearest Cloudflare edge (~15MB, ~15-25s). Download is measured
 # for asymmetry sanity ONLY and never sizes the stream (upload is what matters;
@@ -43,8 +43,11 @@ dd if=/dev/urandom of="$F" bs=1M count=5 2>/dev/null || {
 
 log "RTT to ingest (info only, NOT bandwidth):"
 for h in a.rtmp.youtube.com b.rtmp.youtube.com; do
-  RTCP="$(curl -sS -o /dev/null --connect-timeout 3 --max-time 5 -w '%{time_connect}' "https://$h" 2>/dev/null || echo fail)"
-  log "  $h tcp_connect=${RTCP}s"
+  if RTCP="$(curl -sS -o /dev/null --connect-timeout 3 --max-time 5 -w '%{time_connect}' "https://$h" 2>/dev/null)"; then
+    log "  $h tcp_connect=${RTCP}s"
+  else
+    log "  $h tcp_connect=unreachable"
+  fi
 done
 
 UPS=""

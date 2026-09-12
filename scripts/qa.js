@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ==============================================================================
-// Quran Live Broadcast — Comprehensive Strict Quality Assurance & Verification Gate
+// Quran Live Stream — Comprehensive Strict Quality Assurance & Verification Gate
 // Validates 195 countries, 114 Surahs, recitation audio URLs, API contracts,
 // responsive typography, and self-healing automation scripts.
 // ==============================================================================
@@ -17,7 +17,7 @@ const assert = (ok, msg) => {
   }
 };
 
-console.log('🔍 Starting Quran Live Broadcast Strict Quality Gate Checks...\n');
+console.log('🔍 Starting Quran Live Stream Strict Quality Gate Checks...\n');
 
 // 1. Validate All 195 Countries
 const countriesPath = path.join(ROOT, 'web', 'countries.json');
@@ -58,7 +58,7 @@ const indexHtml = fs.readFileSync(path.join(ROOT, 'web', 'index.html'), 'utf8');
 const appJs = fs.readFileSync(path.join(ROOT, 'web', 'app.js'), 'utf8');
 const styleCss = fs.readFileSync(path.join(ROOT, 'web', 'style.css'), 'utf8');
 
-assert(indexHtml.includes('Quran Live Broadcast'), 'Page title must match official name "Quran Live Broadcast"');
+assert(indexHtml.includes('Quran Live Stream'), 'Page title must match official name "Quran Live Stream"');
 assert(!indexHtml.includes('rail-footer') && !indexHtml.includes('جميع المدن'), 'Right rail footer must remain removed');
 assert(indexHtml.includes('reciter-pill') && indexHtml.includes('wave-equalizer'), 'Reciter equalizer card missing in HTML');
 assert(indexHtml.includes('surah-ayah-pill') && indexHtml.includes('tafsir-info-pill'), 'Bottom info pills missing in HTML');

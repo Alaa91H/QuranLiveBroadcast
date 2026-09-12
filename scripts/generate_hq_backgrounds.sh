@@ -1,7 +1,7 @@
 #!/bin/bash
 # خلفيات HQ عمودية محسنة - بدون gradients (يستخدم color+noise فقط)
 set -e
-DIR="$HOME/quran-24-7/assets/backgrounds/videos"
+DIR="$HOME/quran-live-stream/assets/backgrounds/videos"
 mkdir -p "$DIR"
 echo "انشاء خلفيات HQ..."
 rm -f "$DIR/bg1.mp4" "$DIR/bg2.mp4" "$DIR/bg3.mp4" 2>/dev/null || true

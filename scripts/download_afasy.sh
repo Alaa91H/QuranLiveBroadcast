@@ -1,7 +1,7 @@
 #!/bin/bash
 # تحميل القرآن بصوت العفاسي - جودة 128k عالية
 set -e
-DIR="$HOME/quran-24-7/assets/audio/afasy"
+DIR="$HOME/quran-live-stream/assets/audio/afasy"
 mkdir -p "$DIR"
 cd "$DIR"
 echo "=== تحميل العفاسي 114 سورة ==="

@@ -97,25 +97,55 @@ body.lowfx *::after {
   align-items: center;
   justify-content: center;
   min-height: 0;
+  /* Soft scrim: guarantees contrast on bright photo patches without a bar.
+     Static layer (no animation), verse crossfade below is opacity-only. */
+  background: radial-gradient(ellipse 72% 82% at 50% 46%, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.22) 55%, rgba(0, 0, 0, 0) 78%);
+  transition: opacity 0.35s ease-out;
 }
 
-/* Arabic Ayah - Prominent, majestic & dynamically sized */
+/* Basmala standalone line above the ayah (shown at each surah start) */
+.basmala-line {
+  font-family: 'Amiri', serif;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 2;
+  color: var(--gold-light, #f5d67a);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.75);
+  text-align: center;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+/* Arabic Ayah - the main display: generous room, grows into upper space.
+   line-height 2.05 + vertical padding keep tall tashkeel marks from colliding
+   between lines or clipping at the overflow edges. */
 .ayah-ar {
   font-family: 'Amiri', serif;
   font-size: 58px;
   font-weight: 700;
-  line-height: 2.1;
-  color: #ffffff;
-  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.75);
-  margin-bottom: 12px;
+  line-height: 2.05;
+  /* Off-white rings less on H.264 than pure #FFF; crisp 1px halo (no blur
+     glow: blur is mosquito-noise food for the encoder) */
+  color: #FFFDF5;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.9), 0 3px 14px rgba(0, 0, 0, 0.7);
+  margin-bottom: 10px;
+  padding: 6px 0;
   letter-spacing: normal;
   word-break: normal;
   overflow-wrap: break-word;
   text-wrap: balance;
   text-align: center;
-  max-height: 330px;
+  max-height: 380px;
   overflow: hidden;
   width: 100%;
+  flex-shrink: 0;
+}
+
+/* End-of-ayah ornament */
+.ayah-end {
+  color: var(--gold-light, #f5d67a);
+  font-size: 0.72em;
+  padding-right: 0.25em;
 }
 
 /* English Translation */
@@ -134,18 +164,49 @@ body.lowfx *::after {
   overflow: hidden;
 }
 
+/* Khatma progress: thin gold track under the translation (scaleX = compositor-only) */
+.khatma-track {
+  width: min(420px, 70%);
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 8px auto 0;
+  overflow: hidden;
+}
+.khatma-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.65), rgba(245, 214, 122, 0.95));
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+/* Next-prayer countdown chip under the wall clock (tabular, fixed width) */
+.sc-count {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--gold-light, #f5d67a);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  line-height: 1.2;
+  margin-top: 1px;
+  min-height: 12px;
+}
+
 /* Content Divider Line */
 .content-divider {
   width: 300px;
   height: 1.5px;
   background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.6), transparent);
-  margin: 12px auto 10px;
+  margin: 8px auto;
 }
 
-/* Tafsir Container - Expanded across available width */
+/* Tafsir Container - readable measure for Arabic body (~30 chars/line) */
 .tafsir-container {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1000px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -155,7 +216,7 @@ body.lowfx *::after {
 .tafsir-card {
   position: relative;
   border-radius: 18px;
-  padding: 12px 26px;
+  padding: 10px 26px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   min-height: 0;
   overflow: hidden;
@@ -177,12 +238,13 @@ body.lowfx *::after {
 
 .tafsir-text {
   font-size: 19px;
-  line-height: 1.75;
+  line-height: 1.85;
   color: #f8fafc;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
   margin: 0;
   word-break: normal;
   overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 .tafsir-card-en .tafsir-text {
@@ -411,9 +473,10 @@ body.lowfx *::after {
 .world-panel {
   grid-column: 2;
   height: 100%;
-  background: linear-gradient(180deg, rgba(3, 17, 28, 0.98) 0%, rgba(2, 10, 18, 0.99) 100%);
-  border-left: 1px solid rgba(212, 175, 55, 0.24);
-  box-shadow: -15px 0 50px rgba(0, 0, 0, 0.45);
+  /* Same as main background: transparent so the scene shows through */
+  background: transparent;
+  border-left: 1px solid rgba(212, 175, 55, 0.16);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   padding: 8px 10px;
@@ -429,32 +492,22 @@ body.lowfx *::after {
   min-height: 0;
 }
 
-/* Individual City Card */
+/* Individual City Card: transparent, same as the main scene background */
 .city-card {
   position: relative;
-  border: 1px solid var(--card-border);
+  border: 1px solid rgba(212, 175, 55, 0.20);
   border-radius: 13px;
-  background: var(--card-bg);
+  background: transparent;
   padding: 7px 11px 6px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 
 .city-card-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-size: cover;
-  background-position: center right;
-  opacity: 0.24;
-  pointer-events: none;
-  mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.75) 45%, rgba(0,0,0,0) 80%);
-  -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.75) 45%, rgba(0,0,0,0) 80%);
+  display: none;
 }
 
 .subcards-row {
@@ -469,14 +522,16 @@ body.lowfx *::after {
 }
 
 .meta-subcard {
-  background: linear-gradient(180deg, rgba(5, 24, 38, 0.88) 0%, rgba(2, 16, 26, 0.94) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 9px;
   padding: 3px 6px;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: none;
   height: 100%;
+  /* Readable over the busy scene background */
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 /* 1. Time & Day Subcard (Far Right in RTL) */
@@ -492,7 +547,7 @@ body.lowfx *::after {
 }
 
 .sc-day {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--gold-light);
   line-height: 1.2;
@@ -523,7 +578,7 @@ body.lowfx *::after {
 }
 
 .sc-hijri {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
   color: #f1f5f9;
   line-height: 1.2;
@@ -531,7 +586,7 @@ body.lowfx *::after {
 }
 
 .sc-greg {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 600;
   color: #94a3b8;
   line-height: 1.2;
@@ -592,7 +647,7 @@ body.lowfx *::after {
   font-variant-numeric: tabular-nums;
 }
 
-/* 4. Identity Subcard (City, Country & Rectangular Flag - Far Left in RTL) */
+/* 4. Identity Subcard: names RIGHT, flag LEFT (RTL order) */
 .identity-subcard {
   display: flex;
   align-items: center;
@@ -600,15 +655,14 @@ body.lowfx *::after {
   direction: rtl;
   flex: 1 1 auto;
   justify-content: flex-start;
-  border-color: rgba(212, 175, 55, 0.32);
-  background: rgba(3, 22, 36, 0.82);
+  border-color: rgba(212, 175, 55, 0.28);
   min-width: 0;
   overflow: hidden;
 }
 
 .city-flag-box {
   width: 44px;
-  height: 29px;
+  aspect-ratio: 3 / 2;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -617,6 +671,7 @@ body.lowfx *::after {
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   flex-shrink: 0;
   padding: 1px;
 }
@@ -638,31 +693,40 @@ body.lowfx *::after {
 .city-name-col {
   display: flex;
   flex-direction: column;
-  text-align: right;
+  justify-content: center;
+  text-align: center;
   direction: rtl;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
 }
 
+/* Names: strictly ONE line each (JS shrink-to-fit keeps them FULL, CSS
+   ellipsis is only the pre-JS/fallback guard, never the overflow exit) */
 .city-name {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
   color: #ffffff;
-  line-height: 1.15;
+  line-height: 1.25;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .city-country {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   color: #cbd5e1;
   margin-top: 1px;
+  line-height: 1.25;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Prayer Times 6-column Grid - Fills remaining card space cleanly */
@@ -685,11 +749,12 @@ body.lowfx *::after {
   justify-content: center;
   padding: 5px 2px;
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.09);
   text-align: center;
   transition: all 0.25s ease;
   height: 100%;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 .p-name {
@@ -745,9 +810,11 @@ body.lowfx *::after {
 
   .ayah-ar {
     font-size: 42px;
-    line-height: 1.38;
+    line-height: 1.75;
     margin-bottom: 6px;
-    max-height: 230px;
+    padding: 4px 0;
+    max-height: 300px;
+    flex-shrink: 0;
   }
 
   .ayah-translation-en {
@@ -814,7 +881,25 @@ body.lowfx *::after {
     gap: 8px;
   }
 
-  .tafsir-title-ar {
+/* Pill visual order (container is LTR): tafsir LEFT, reciter MIDDLE, surah RIGHT */
+.surah-ayah-pill { order: 3; }
+.reciter-pill { order: 2; }
+.tafsir-info-pill { order: 1; }
+
+/* Tafsir pill: single bilingual line (no repeated label) */
+.tafsir-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  direction: rtl;
+  text-align: center;
+}
+
+.tafsir-title-ar {
     font-size: 12px;
   }
 
@@ -864,7 +949,7 @@ body.lowfx *::after {
   }
 
   .subcards-row {
-    height: 35px;
+    height: 43px;
     gap: 4px;
   }
 
@@ -874,11 +959,11 @@ body.lowfx *::after {
   }
 
   .time-day-subcard {
-    min-width: 65px;
+    min-width: 58px;
   }
 
   .sc-day {
-    font-size: 9.5px;
+    font-size: 12px;
   }
 
   .sc-time {
@@ -886,7 +971,7 @@ body.lowfx *::after {
   }
 
   .dates-subcard {
-    min-width: 95px;
+    min-width: 80px;
   }
 
   .sc-hijri {
@@ -894,11 +979,11 @@ body.lowfx *::after {
   }
 
   .sc-greg {
-    font-size: 8px;
+    font-size: 9px;
   }
 
   .weather-subcard {
-    min-width: 95px;
+    min-width: 78px;
     gap: 4px;
   }
 
@@ -929,7 +1014,7 @@ body.lowfx *::after {
 
   .city-flag-box {
     width: 38px;
-    height: 25px;
+    aspect-ratio: 3 / 2;
     border-radius: 3px;
     padding: 1px;
   }
@@ -943,8 +1028,8 @@ body.lowfx *::after {
   }
 
   .prayer-times-row {
-    height: 52px;
-    min-height: 48px;
+    height: 44px;
+    min-height: 42px;
     gap: 3px;
     margin-top: 3px;
   }
@@ -960,7 +1045,7 @@ body.lowfx *::after {
   }
 
   .p-time {
-    font-size: 12.5px;
+    font-size: 12px;
   }
 
   .p-col.active-next .p-name {

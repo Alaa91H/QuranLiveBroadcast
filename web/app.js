@@ -1,4 +1,4 @@
-// Quran Live Broadcast - Controller & Recitation Synchronizer
+// Quran Live Stream - Controller & Recitation Synchronizer
 const state = {
   page: 0,
   perPage: 6,
@@ -151,11 +151,13 @@ const prayerNamesList = [
   ['Isha', 'العشاء']
 ];
 
+// BMP text glyphs ONLY (no VS16 emoji): headless servers lack color-emoji
+// fonts, which rendered tofu boxes. DejaVu Sans covers this whole set.
 const weatherGlyphs = {
-  0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
-  51: '🌦️', 53: '🌦️', 55: '🌧️', 61: '🌦️', 63: '🌧️', 65: '🌧️',
-  71: '❄️', 73: '❄️', 75: '❄️', 80: '🌦️', 81: '🌧️', 82: '🌧️',
-  95: '⛈️'
+  0: '☀', 1: '☀', 2: '☁', 3: '☁', 45: '☁', 48: '☁',
+  51: '☂', 53: '☂', 55: '☔', 61: '☂', 63: '☔', 65: '☔',
+  71: '❄', 73: '❄', 75: '❄', 80: '☂', 81: '☔', 82: '☔',
+  95: '⚡'
 };
 
 function formatPrayerTime(t) {
@@ -219,6 +221,27 @@ function getCityDayName(tz) {
   }
 }
 
+// Next-prayer countdown target (epoch ms) from a "h:MM AM/PM" time + timezone.
+// Wall-clock -> epoch via the locale-string offset trick (DST-safe). 0 = unknown.
+function nextPrayerTs(timeStr, tz) {
+  try {
+    const m = String(timeStr || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (!m) return 0;
+    let h = Number(m[1]) % 12;
+    if (/pm/i.test(m[3] || '')) h += 12;
+    const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const parts = fmt.format(new Date()).split('-').map(Number);
+    const guess = Date.UTC(parts[0], parts[1] - 1, parts[2], h, Number(m[2]), 0);
+    const tzWall = new Date(new Date(guess).toLocaleString('en-US', { timeZone: tz || 'UTC' })).getTime();
+    const utcWall = new Date(new Date(guess).toLocaleString('en-US')).getTime();
+    let target = guess + (utcWall - tzWall);
+    if (target <= Date.now()) target += 86400000;
+    return target;
+  } catch {
+    return 0;
+  }
+}
+
 function renderCityCard(c) {
   const timings = c.prayer?.timings || null;
   const nextKey = timings ? getNextPrayerKey(timings, c.timezone) : (c.prayers?.find(x => x.next)?.name === 'العصر' ? 'Asr' : 'Asr');
@@ -256,6 +279,8 @@ function renderCityCard(c) {
       <span class="p-time">${p.time}</span>
     </div>
   `).join('');
+  const nextPrayer = prayersList.find(p => p.next);
+  const nextTs = nextPrayerTs(nextPrayer ? nextPrayer.time : '', c.timezone);
 
   const timeDisplay = c.timeDisplay || formatClockTime(c.timezone);
 
@@ -264,10 +289,11 @@ function renderCityCard(c) {
       <div class="city-card-bg" style="background-image: url('${landmark}')"></div>
       
       <div class="subcards-row">
-        <!-- 1. Day & Time Subcard (Far Right in RTL) -->
+        <!-- 1. Day & Time Subcard (Far Right in RTL) + next-prayer countdown -->
         <div class="meta-subcard time-day-subcard">
           <span class="sc-day" data-day-tz="${c.timezone || ''}">${dayName}</span>
           <strong class="sc-time" data-tz="${c.timezone || ''}">${timeDisplay}</strong>
+          <span class="sc-count" data-next-ts="${nextTs || ''}"></span>
         </div>
 
         <!-- 2. Hijri & Gregorian Dates Subcard -->
@@ -279,8 +305,8 @@ function renderCityCard(c) {
         <!-- 3. Weather Subcard: High/Low stacked on right, Temp & Icon on left -->
         <div class="meta-subcard weather-subcard">
           <div class="sc-hilo-stack">
-            <span class="sc-hi">عظمى ${tempMax}</span>
-            <span class="sc-lo">صغرى ${tempMin}</span>
+            <span class="sc-hi">${tempMax}</span>
+            <span class="sc-lo">${tempMin}</span>
           </div>
           <div class="sc-temp-group">
             <span class="sc-wx-icon">${icon}</span>
@@ -288,15 +314,15 @@ function renderCityCard(c) {
           </div>
         </div>
 
-        <!-- 4. Flag & City/Country Identity Subcard (Far Left in RTL) -->
+        <!-- 4. Flag & City/Country Identity Subcard (names RIGHT, flag LEFT in RTL) -->
         <div class="meta-subcard identity-subcard">
-          <div class="city-flag-box" title="${c.nameAr || c.name || ''}">
-            <img src="${flagSrc}" alt="${c.code || ''}" class="city-flag-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
-            <span class="city-flag-emoji" style="display:none;">${flagEmoji}</span>
-          </div>
           <div class="city-name-col">
             <h3 class="city-name">${c.capitalAr || c.capital || ''}</h3>
             <span class="city-country">${c.nameAr || c.name || ''}</span>
+          </div>
+          <div class="city-flag-box" title="${c.nameAr || c.name || ''}">
+            <img src="${flagSrc}" alt="${c.code || ''}" class="city-flag-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+            <span class="city-flag-emoji" style="display:none;">${flagEmoji}</span>
           </div>
         </div>
       </div>
@@ -312,6 +338,21 @@ function renderCities(cities) {
   const container = $('city-cards-container');
   if (!container) return;
   container.innerHTML = cities.map(renderCityCard).join('');
+  // Single-line names: shrink-to-fit so every name shows FULLY on one line
+  container.querySelectorAll('.city-name, .city-country').forEach(fitTextWidth);
+}
+
+// Width auto-fit: reduces font until the text fits ONE line (never overflows,
+// never truncates). Range derived from the CSS size down to a 9px floor.
+function fitTextWidth(el, minPx = 9, step = 0.5) {
+  if (!el) return;
+  let size = parseFloat(getComputedStyle(el).fontSize) || 14;
+  let guard = 0;
+  el.style.whiteSpace = 'nowrap';
+  while (guard++ < 40 && size > minPx && el.scrollWidth > el.clientWidth + 1) {
+    size -= step;
+    el.style.fontSize = `${size}px`;
+  }
 }
 
 // Dynamic Auto-Fit Algorithm: prevents overflow, clipping, or overlaps on any screen resolution or long verses
@@ -370,7 +411,7 @@ function fitAllContent() {
 // 24-hour persistent storage check
 function getStoredCache(key) {
   try {
-    const raw = localStorage.getItem('quran24_' + key);
+    const raw = localStorage.getItem('quranls_' + key);
     if (!raw) return null;
     const item = JSON.parse(raw);
     if (Date.now() - item.time < 24 * 60 * 60 * 1000) {
@@ -382,13 +423,14 @@ function getStoredCache(key) {
 
 function setStoredCache(key, data) {
   try {
-    localStorage.setItem('quran24_' + key, JSON.stringify({ time: Date.now(), data }));
+    localStorage.setItem('quranls_' + key, JSON.stringify({ time: Date.now(), data }));
   } catch {}
 }
 
 async function loadCapitalsPage() {
   try {
-    const cacheKey = `capitals_p${state.page}`;
+    // v2: roster order changed (Arab/Islamic first) — old cached pages ignored
+    const cacheKey = `capitals_v2_p${state.page}`;
     let data = getStoredCache(cacheKey);
 
     if (!data) {
@@ -587,7 +629,53 @@ function preloadNextAyah(surah, ayah, count = 3) {
   }
 }
 
+// Basmala standalone line: shown above ayah 1 of every surah except
+// Al-Fatiha (the verse IS the basmala) and At-Tawbah (no basmala).
+// If the API text starts with an inline basmala it is split off so the line
+// never duplicates.
+function updateBasmalaLine(arabic, surah, ayah) {
+  const el = $('basmala-line');
+  if (!el) return;
+  let text = String(arabic || '');
+  let show = (Number(surah) !== 1 && Number(surah) !== 9 && Number(ayah) === 1);
+  if (show) {
+    const m = text.match(/^([\s\S]{0,90}?(?:ٱ?لرَّحِيمِ|الرحيم))([\s\u06D6-\u06ED]*)([\s\S]*)$/);
+    if (m && /بِسْمِ|بسم/.test(m[1]) && (m[3] || '').trim().length > 0) {
+      text = m[3].trim();
+      if ($('ayah-ar')) $('ayah-ar').textContent = text;
+    }
+  }
+  el.style.display = show ? '' : 'none';
+}
+
+// Khatma progress: overall position across all 6236 ayahs (bar via scaleX =
+// compositor-only, no layout cost)
+function updateKhatmaProgress(surah, ayah) {
+  try {
+    const list = state.surahs;
+    if (!Array.isArray(list) || list.length !== 114) return;
+    const total = list.reduce((a, s) => a + (Number(s.ayahs) || 0), 0) || 6236;
+    let cum = 0;
+    for (const s of list) {
+      if (Number(s.number) < Number(surah)) cum += Number(s.ayahs) || 0;
+      else break;
+    }
+    cum += Number(ayah) || 0;
+    const pct = Math.min(1, Math.max(0, cum / total));
+    const fill = $('khatma-fill');
+    if (fill) fill.style.transform = `scaleX(${pct})`;
+    if ($('meta-surah-count')) $('meta-surah-count').textContent = `${surah}/114`;
+  } catch {}
+}
+
 async function loadQuranVerse(surah, ayah) {
+  if (!surah) surah = state.currentSurah;
+  if (!ayah) ayah = state.currentAyah;
+
+  // Verse crossfade: fade the block out (async fetch below yields a paint),
+  // restored in `finally` for a 350ms fade-in (opacity-only, compositor cheap)
+  const wrap = $('quran-content-wrapper');
+  if (wrap) wrap.style.opacity = '0';
   if (!surah) surah = state.currentSurah;
   if (!ayah) ayah = state.currentAyah;
 
@@ -608,10 +696,17 @@ async function loadQuranVerse(surah, ayah) {
       state.currentSurah = q.surah || surah;
       state.currentAyah = q.ayah || ayah;
 
-      if ($('ayah-ar')) $('ayah-ar').textContent = q.arabic || '';
+      if ($('ayah-ar')) {
+        $('ayah-ar').textContent = q.arabic || '';
+        const endMark = document.createElement('span');
+        endMark.className = 'ayah-end';
+        endMark.textContent = ' ۝';
+        $('ayah-ar').appendChild(endMark);
+      }
       if ($('ayah-en')) $('ayah-en').textContent = q.translation || '';
       if ($('tafsir-ar')) $('tafsir-ar').textContent = q.tafsirAr || '';
       if ($('tafsir-en')) $('tafsir-en').textContent = q.tafsirEn || '';
+      updateBasmalaLine(q.arabic || '', q.surah || surah, q.ayah || ayah);
       
       // Update metadata in bottom cards
       if ($('meta-surah-title')) {
@@ -621,8 +716,8 @@ async function loadQuranVerse(surah, ayah) {
       }
       if ($('meta-ayah-num')) $('meta-ayah-num').textContent = q.ayah || ayah;
       if ($('meta-total-ayahs')) $('meta-total-ayahs').textContent = q.totalAyahs || 286;
-      if ($('meta-tafsir-ar')) $('meta-tafsir-ar').textContent = `التفسير: ${q.tafsirNameAr || 'المُيَسَّر'}`;
-      if ($('meta-tafsir-en')) $('meta-tafsir-en').textContent = `Tafsir: ${q.tafsirNameEn || 'Al-Muyassar'}`;
+      if ($('meta-tafsir')) $('meta-tafsir').textContent = `${q.tafsirNameAr || 'المُيَسَّر'} • ${q.tafsirNameEn || 'Al-Muyassar'}`;
+      updateKhatmaProgress(q.surah || surah, q.ayah || ayah);
 
       // Synchronize audio recitation
       playRecitation(q);
@@ -634,6 +729,7 @@ async function loadQuranVerse(surah, ayah) {
     console.error('Quran verse load error', e);
     scheduleFallbackAdvance(10000);
   } finally {
+    if (wrap) wrap.style.opacity = '1';
     requestAnimationFrame(fitAllContent);
   }
 }
@@ -642,6 +738,16 @@ function tickClocks() {
   document.querySelectorAll('[data-tz]').forEach(el => {
     const tz = el.dataset.tz;
     if (tz) el.textContent = formatClockTime(tz);
+  });
+  // Next-prayer countdowns (1Hz, tabular fixed-width, no layout shift)
+  document.querySelectorAll('[data-next-ts]').forEach(el => {
+    const ts = Number(el.dataset.nextTs || 0);
+    if (!ts) { el.textContent = ''; return; }
+    const s = Math.floor((ts - Date.now()) / 1000);
+    if (s <= 0) { el.textContent = 'الآن'; return; }
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+    const t = (h > 0 ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(ss).padStart(2, '0');
+    el.textContent = `متبقي ${t}`;
   });
 }
 

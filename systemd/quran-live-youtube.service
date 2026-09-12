@@ -5,9 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/quran-24-7
-EnvironmentFile=-%h/quran-24-7/.env
-ExecStart=%h/quran-24-7/scripts/stream_youtube.sh
+WorkingDirectory=%h/quran-live-stream
+EnvironmentFile=-%h/quran-live-stream/.env
+ExecStart=%h/quran-live-stream/scripts/stream_youtube.sh
 Restart=always
 RestartSec=5
 TimeoutStopSec=30
@@ -15,8 +15,8 @@ TimeoutStopSec=30
 # last thing the OOM killer may take (never -1000 = unkillable hang risk).
 Nice=-5
 OOMScoreAdjust=-300
-StandardOutput=append:%h/quran-24-7/logs/systemd_youtube.log
-StandardError=append:%h/quran-24-7/logs/systemd_youtube.log
+StandardOutput=append:%h/quran-live-stream/logs/systemd_youtube.log
+StandardError=append:%h/quran-live-stream/logs/systemd_youtube.log
 
 [Install]
 WantedBy=default.target

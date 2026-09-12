@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Quran Live Broadcast - Offline Audio Downloader & Synchronizer
+ * Quran Live Stream - Offline Audio Downloader & Synchronizer
  * Downloads all 6,236 verse-by-verse recitation MP3 files (Mishary Alafasy 128kbps)
  * directly into web/assets/audio/ for 100% offline continuous playback.
  */
@@ -40,7 +40,7 @@ function extractZip(zipPath, targetDir) {
 }
 
 async function downloadFile(url, destPath) {
-  const res = await fetch(url, { headers: { 'User-Agent': 'QuranLiveBroadcast/3.0' } });
+  const res = await fetch(url, { headers: { 'User-Agent': 'QuranLiveStream/3.0' } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const arrayBuf = await res.arrayBuffer();
   fs.writeFileSync(destPath, Buffer.from(arrayBuf));

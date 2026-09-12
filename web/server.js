@@ -286,7 +286,7 @@ function getAyahAudioUrl(surah, ayah) {
 function cacheAudioInBackground(fileName, localPath) {
   if (OFFLINE) return;
   const url = `https://everyayah.com/data/Alafasy_128kbps/${fileName}`;
-  fetch(url, { headers: { 'User-Agent': 'QuranLiveBroadcast/3.0' } })
+  fetch(url, { headers: { 'User-Agent': 'QuranLiveStream/3.0' } })
     .then(async r => {
       if (r.ok) {
         const buf = Buffer.from(await r.arrayBuffer());
@@ -401,6 +401,32 @@ function normalizeCapital(c) {
 
 const capitals = JSON.parse(fs.readFileSync(path.join(ROOT, 'countries.json'), 'utf8')).map(normalizeCapital);
 
+// Display order: Arab League first (Makkah first), then other Muslim-majority
+// countries, then the rest grouped by continent (from timezone) and alphabetical.
+// Applied once at load so every rotation page follows it globally.
+const ARAB_LEAGUE = ['SA', 'YE', 'AE', 'QA', 'BH', 'KW', 'OM', 'IQ', 'SY', 'JO', 'LB', 'PS', 'EG', 'SD', 'LY', 'TN', 'DZ', 'MA', 'MR', 'SO', 'DJ', 'KM'];
+const MUSLIM_MAJORITY = ['TR', 'IR', 'AF', 'PK', 'BD', 'MY', 'ID', 'BN', 'UZ', 'TM', 'KG', 'KZ', 'TJ', 'AZ', 'SN', 'ML', 'NE', 'TD', 'NG', 'BF', 'CI', 'GN', 'GW', 'SL', 'GM', 'AL', 'BA', 'MV'];
+const CONTINENT_ORDER = { Asia: 0, Africa: 1, Europe: 2, America: 3, Australia: 4, Pacific: 4, Atlantic: 5, Indian: 5, Arctic: 5, Antarctica: 5, Etc: 6 };
+function tzContinent(tz) {
+  const z = String(tz || '');
+  const i = z.indexOf('/');
+  const k = i < 0 ? 'Etc' : z.slice(0, i);
+  return CONTINENT_ORDER[k] !== undefined ? CONTINENT_ORDER[k] : 6;
+}
+function countryRank(c) {
+  let i = ARAB_LEAGUE.indexOf(c.code);
+  if (i >= 0) return [0, i];
+  i = MUSLIM_MAJORITY.indexOf(c.code);
+  if (i >= 0) return [1, i];
+  return [2, tzContinent(c.timezone)];
+}
+capitals.sort((a, b) => {
+  const ra = countryRank(a), rb = countryRank(b);
+  if (ra[0] !== rb[0]) return ra[0] - rb[0];
+  if (ra[1] !== rb[1]) return ra[1] - rb[1];
+  return String(a.nameAr || a.name || '').localeCompare(String(b.nameAr || b.name || ''), 'ar');
+});
+
 async function countrySnapshot(c) {
   const base = normalizeCapital(c);
   const weatherResult = await weather(base).catch(() => null);
@@ -432,7 +458,7 @@ async function capitalsPage(url) {
 }
 
 const routes = {
-  '/api/health': async () => ({ ok: true, service: 'quran-24-7-web', now: new Date().toISOString(), capitals: capitals.length, surahs: surahsData.length }),
+  '/api/health': async () => ({ ok: true, service: 'quran-live-stream-web', now: new Date().toISOString(), capitals: capitals.length, surahs: surahsData.length }),
   '/api/capitals': capitalsPage,
   '/api/surahs': async () => surahsData,
   '/api/quran': async url => quranVerse(Number(url.searchParams.get('surah') || 1), Number(url.searchParams.get('ayah') || 1)),
@@ -478,4 +504,14 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Retry on EADDRINUSE instead of crashing: under load the old instance may
+// still be releasing the port when the watchdog launches a replacement.
+server.on('error', (e) => {
+  if (e.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} busy, retrying in 3s...`);
+    setTimeout(() => server.listen(PORT, '127.0.0.1'), 3000);
+  } else {
+    throw e;
+  }
+});
 server.listen(PORT, '127.0.0.1', () => console.log(`Quran24/7 web ${PORT}`));

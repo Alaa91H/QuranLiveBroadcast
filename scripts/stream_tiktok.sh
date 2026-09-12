@@ -15,10 +15,22 @@ RUNTIME="$BASE_DIR/runtime"
 mkdir -p "$RUNTIME"
 TIKTOK_WIDTH=${TIKTOK_WIDTH:-720}
 TIKTOK_HEIGHT=${TIKTOK_HEIGHT:-1280}
-FPS=${FPS:-30}
+# Static background + text overlay: 15fps is visually identical, ~half the CPU
+FPS=${FPS:-15}
 VIDEO_BITRATE_TT=${VIDEO_BITRATE_TT:-2000k}
 AUDIO_BITRATE=${AUDIO_BITRATE:-128k}
 PRESET=${PRESET:-ultrafast}
+# Optional CPU pinning (empty = off): TASKSET_TIKTOK=1
+TASKSET_TT=()
+if [ -n "${TASKSET_TIKTOK:-}" ] && command -v taskset >/dev/null 2>&1; then
+  TASKSET_TT=(taskset -c "$TASKSET_TIKTOK")
+fi
+# drawtext only when the font actually exists (else ffmpeg would die-loop)
+DRAWTEXT=""
+DEJAVU=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+if [ -f "$DEJAVU" ]; then
+  DRAWTEXT=",drawtext=fontfile=${DEJAVU}:text='القرآن الكريم - العفاسي':fontcolor=white:fontsize=32:box=1:boxcolor=black@0.6:boxborderw=5:x=(w-text_w)/2:y=h-th-100,drawtext=fontfile=${DEJAVU}:text='Quran 24/7':fontcolor=gold:fontsize=24:box=1:boxcolor=black@0.5:boxborderw=3:x=(w-text_w)/2:y=60"
+fi
 if [ -z "$TIKTOK_RTMP_URL" ] || [ -z "$TIKTOK_STREAM_KEY" ]; then
   echo "[$(date)] خطأ: TIKTOK_RTMP_URL او STREAM_KEY غير موجود في .env" | tee -a "$LOG"
   exit 1
@@ -39,12 +51,14 @@ find "$VIDEO_DIR" -name "*.mp4" -exec echo "file {}" \; | sort > "$RUNTIME/video
 echo "[$(date)] TikTok ${TIKTOK_WIDTH}x${TIKTOK_HEIGHT} ${VIDEO_BITRATE_TT}"
 while true; do
   echo "[$(date)] بدء البث الى تيك توك ..." | tee -a "$LOG"
-  ffmpeg -hide_banner -loglevel info \
-    -re -stream_loop -1 -f concat -safe 0 -i "$RUNTIME/video_playlist.txt" \
-    -re -stream_loop -1 -f concat -safe 0 -i "$RUNTIME/audio_playlist.txt" \
-    -vf "scale=${TIKTOK_WIDTH}:${TIKTOK_HEIGHT}:force_original_aspect_ratio=increase,crop=${TIKTOK_WIDTH}:${TIKTOK_HEIGHT},setsar=1,fps=${FPS},drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:text='القرآن الكريم - العفاسي':fontcolor=white:fontsize=32:box=1:boxcolor=black@0.6:boxborderw=5:x=(w-text_w)/2:y=h-th-100,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:text='Quran 24/7':fontcolor=gold:fontsize=24:box=1:boxcolor=black@0.5:boxborderw=3:x=(w-text_w)/2:y=60" \
-    -c:v libx264 -preset $PRESET -b:v $VIDEO_BITRATE_TT -maxrate $VIDEO_BITRATE_TT -bufsize 4000k -g 60 -pix_fmt yuv420p -r $FPS \
-    -c:a aac -b:a $AUDIO_BITRATE -ar 44100 -ac 2 \
+  "${TASKSET_TT[@]}" ffmpeg -hide_banner -loglevel warning \
+    -re -stream_loop -1 -thread_queue_size 64 -probesize 256k -f concat -safe 0 -i "$RUNTIME/video_playlist.txt" \
+    -re -stream_loop -1 -thread_queue_size 64 -probesize 256k -f concat -safe 0 -i "$RUNTIME/audio_playlist.txt" \
+    -vf "scale=${TIKTOK_WIDTH}:${TIKTOK_HEIGHT}:force_original_aspect_ratio=increase,crop=${TIKTOK_WIDTH}:${TIKTOK_HEIGHT},setsar=1,fps=${FPS}${DRAWTEXT}" \
+    -c:v libx264 -preset $PRESET -tune zerolatency -threads 1 -b:v $VIDEO_BITRATE_TT -maxrate $VIDEO_BITRATE_TT -bufsize 4000k -g $((FPS * 2)) -keyint_min $((FPS * 2)) -sc_threshold 0 -pix_fmt yuv420p -r $FPS \
+    -c:a aac -aac_coder fast -b:a $AUDIO_BITRATE -ar 44100 -ac 2 \
+    -flvflags no_duration_filesize \
+    -rw_timeout 10000000 \
     -f flv "$RTMP" 2>&1 | tee -a "$LOG"
   EC=$?
   echo "[$(date)] توقف $EC - اعادة بعد 5ث" | tee -a "$LOG"

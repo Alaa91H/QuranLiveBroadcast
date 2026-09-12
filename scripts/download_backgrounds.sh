@@ -1,8 +1,8 @@
 #!/bin/bash
 # تحميل خلفيات عالية الجودة - فيديو وصور اسلامية
 set -e
-VID_DIR="$HOME/quran-24-7/assets/backgrounds/videos"
-IMG_DIR="$HOME/quran-24-7/assets/backgrounds/images"
+VID_DIR="$HOME/quran-live-stream/assets/backgrounds/videos"
+IMG_DIR="$HOME/quran-live-stream/assets/backgrounds/images"
 mkdir -p "$VID_DIR" "$IMG_DIR"
 echo "=== تحميل خلفيات ==="
 # اذا لم توجد خلفيات، ننشئ فيديوهات اختبارية عالية الجودة عبر ffmpeg

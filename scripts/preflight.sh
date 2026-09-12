@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Preflight (verify BEFORE streaming)
+# Quran Live Stream — Preflight (verify BEFORE streaming)
 # Synchronous, fast (<30s), zero background work. Checks every input the stream
 # needs and writes the effective decision to runtime/preflight.env:
 #   PREFLIGHT_AUDIO=pulse|file   (file only when coverage is sufficient)
@@ -37,12 +37,19 @@ AUDIO="pulse"
 VIDEO="live"
 
 # --- 1. Binaries ---------------------------------------------------------------
-command -v ffmpeg >/dev/null 2>&1 || { log "HARD FAIL: ffmpeg missing."; FAIL=1; }
-command -v node >/dev/null 2>&1 || { log "HARD FAIL: node missing."; FAIL=1; }
-if ! command -v google-chrome >/dev/null 2>&1 && ! command -v chromium-browser >/dev/null 2>&1 && ! command -v chromium >/dev/null 2>&1; then
-  log "HARD FAIL: no chrome/chromium binary."; FAIL=1
+command -v ffmpeg >/dev/null 2>&1 || { log "HARD FAIL: ffmpeg missing (run scripts/install_deps.sh)."; FAIL=1; }
+command -v node >/dev/null 2>&1 || { log "HARD FAIL: node missing (run scripts/install_deps.sh)."; FAIL=1; }
+BROWSER_HIT=""
+for cand in "${CHROME_BIN:-}" google-chrome chromium-browser chromium; do
+  [ -z "$cand" ] && continue
+  if command -v "$cand" >/dev/null 2>&1 || [ -x "$cand" ]; then BROWSER_HIT="$cand"; break; fi
+done
+if [ -z "$BROWSER_HIT" ]; then
+  log "HARD FAIL: no chrome/chromium binary (run scripts/install_browser.sh)."; FAIL=1
+else
+  log "Browser: $BROWSER_HIT ($("$BROWSER_HIT" --version 2>/dev/null || echo version-unknown))."
 fi
-command -v Xvfb >/dev/null 2>&1 || { log "HARD FAIL: Xvfb missing."; FAIL=1; }
+command -v Xvfb >/dev/null 2>&1 || { log "HARD FAIL: Xvfb missing (run scripts/install_deps.sh)."; FAIL=1; }
 
 # --- 2. Stream keys --------------------------------------------------------------
 if [ -z "${YOUTUBE_RTMP_URL:-}" ] || [ -z "${YOUTUBE_STREAM_KEY:-}" ]; then
@@ -97,28 +104,15 @@ if [ "${AUDIO_MODE:-pulse}" = "file" ]; then
 else
   log "Audio: pulse mode ($MP3_COUNT local mp3s cached)."
 fi
-
-# --- 7. Episode validity decides file-loop vs live ---------------------------------
-if [ "${STREAM_MODE:-live}" = "file" ]; then
-  EP="$BASE_DIR/episodes/current.mp4"
-  if [ -f "$EP" ]; then
-    ESIZE="$(stat -c%s "$EP" 2>/dev/null || stat -f%z "$EP" 2>/dev/null || echo 0)"
-    EDUR="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$EP" 2>/dev/null || echo 0)"
-    EDUR="${EDUR%.*}"
-    EMTIME="$(stat -c%Y "$EP" 2>/dev/null || stat -f%m "$EP" 2>/dev/null || echo 0)"
-    EAGE_H="$(( ($(date +%s) - ${EMTIME:-0}) / 3600 ))"
-    if [ "${ESIZE:-0}" -gt 50000000 ] && [ "${EDUR:-0}" -gt 1800 ] && [ "$EAGE_H" -lt "${EPISODE_MAX_AGE_H:-30}" ]; then
-      VIDEO="file"
-      log "Video: file loop OK ($(basename "$(readlink -f "$EP" 2>/dev/null || echo "$EP")"), ${EDUR}s, ${EAGE_H}h old)."
-    else
-      log "WARN: episode invalid/stale (size=$ESIZE dur=${EDUR}s age=${EAGE_H}h) -> live capture for this run."; WARN=1
-    fi
-  else
-    log "WARN: STREAM_MODE=file but no episodes/current.mp4 -> live capture for this run."; WARN=1
-  fi
-else
-  log "Video: live capture mode."
+# Silence guard: pulse path without pactl AND no usable local audio at all
+# would broadcast dead air (anullsrc fallback). Refuse instead of going silent.
+if [ "$AUDIO" = "pulse" ] && ! command -v pactl >/dev/null 2>&1 && [ "$MP3_COUNT" -eq 0 ]; then
+  log "HARD FAIL: pulse audio requested but pactl missing and zero local mp3s (would stream silence). Install pulseaudio or run control.sh prepare."; FAIL=1
 fi
+
+# --- 7. Video source: always live capture (file-loop recording removed) -----------
+VIDEO="live"
+log "Video: live capture mode."
 
 # --- 8. Port: free, or owned by a healthy web server -------------------------------
 PORT="${QURAN_WEB_PORT:-4177}"

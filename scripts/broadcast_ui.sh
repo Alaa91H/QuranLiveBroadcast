@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Headless UI & Virtual Display Launcher
+# Quran Live Stream — Headless UI & Virtual Display Launcher
 # ==============================================================================
 set -euo pipefail
 BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -31,6 +31,12 @@ setup_audio_sink() {
     return 0
   fi
   if command -v pactl >/dev/null 2>&1; then
+    # Headless servers often have no daemon running: start it (lingered user
+    # services keep it alive across logouts; first_boot enables linger).
+    if ! pactl info >/dev/null 2>&1; then
+      pulseaudio --start --exit-idle-time=-1 >/dev/null 2>&1 || true
+      sleep 1
+    fi
     pactl load-module module-null-sink sink_name=quran_sink sink_properties=device.description="QuranSink" >/dev/null 2>&1 || true
   fi
 }
@@ -40,7 +46,15 @@ start_web() {
   if ! kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; then
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Quran Web Server on port $PORT (Node max-old-space: ${NODE_MEM_MB}MB)..."
     (cd "$BASE_DIR/web" && PORT="$PORT" node --max-old-space-size="${NODE_MEM_MB}" server.js >>"$LOG_DIR/web.log" 2>&1 & echo $! >"$PIDFILE")
-    sleep 1
+    # Wait until the server actually answers health (node is slow under CPU
+    # steal; launching chrome earlier yields blank pages = black frames).
+    local i
+    for i in $(seq 1 25); do
+      if curl -s --max-time 2 "http://127.0.0.1:$PORT/api/health" 2>/dev/null | grep -q '"ok":true'; then
+        break
+      fi
+      sleep 1
+    done
   fi
 }
 
@@ -70,7 +84,11 @@ start_browser() {
   fi
   if ! kill -0 "$(cat "$CHROME_PIDFILE" 2>/dev/null)" 2>/dev/null; then
     local BROWSER_BIN
-    BROWSER_BIN="$(command -v google-chrome || command -v chromium-browser || command -v chromium || echo "chromium")"
+    # CHROME_BIN override first (snap / playwright / manual paths), then stock names
+    BROWSER_BIN="${CHROME_BIN:-}"
+    if [ -z "$BROWSER_BIN" ]; then
+      BROWSER_BIN="$(command -v google-chrome || command -v chromium-browser || command -v chromium || echo "chromium")"
+    fi
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Browser ($BROWSER_BIN, ${STREAM_WIDTH}x${STREAM_HEIGHT}, memory cap ${CHROME_MEM_MB}MB, audio: ${AUDIO_MODE:-pulse})..."
     # File-audio mode: page is video-only. --mute-audio keeps the media
     # timeline (ayah sync preserved); --disable-audio-output lets the audio
@@ -99,7 +117,9 @@ start_browser() {
     if [ -n "${TASKSET_CHROME:-}" ] && command -v taskset >/dev/null 2>&1; then
       TASKSET_PRE=(taskset -c "$TASKSET_CHROME")
     fi
-    DISPLAY=":$DISPLAY_NUM" $CHROME_SINK_ENV "${TASKSET_PRE[@]}" "$BROWSER_BIN" \
+    # NOTE: $CHROME_SINK_ENV must go through `env`: a bare expanded VAR=value
+    # word is parsed as a COMMAND by bash, not an assignment (black screen!).
+    DISPLAY=":$DISPLAY_NUM" env $CHROME_SINK_ENV "${TASKSET_PRE[@]}" "$BROWSER_BIN" \
       --no-sandbox \
       --disable-gpu \
       --in-process-gpu \

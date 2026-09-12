@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — YouTube 24/7 Adaptive Live Streamer
+# Quran Live Stream — YouTube 24/7 Adaptive Live Streamer
 # Automatically scales from 720p HD up to 8K based on host hardware capabilities.
 # ==============================================================================
 set -euo pipefail
@@ -61,13 +61,10 @@ set -a
 # shellcheck disable=SC1091
 source "$RUNTIME/preflight.env" 2>/dev/null || true
 set +a
-# Effective decisions for THIS run (preflight verdict wins over config):
+# Effective decisions for THIS run (preflight verdict wins over config).
+# Live-only broadcast: no file loop, no local archive (removed by design).
 EFF_AUDIO="${PREFLIGHT_AUDIO:-${AUDIO_MODE:-pulse}}"
-EFF_VIDEO_MODE="live"
-if [ "${STREAM_MODE:-live}" = "file" ] && [ "${PREFLIGHT_VIDEO:-live}" = "file" ]; then
-  EFF_VIDEO_MODE="file"
-fi
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Effective run: video=$EFF_VIDEO_MODE audio=$EFF_AUDIO profile=$PROFILE_NAME" | tee -a "$LOG"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Effective run: live video, audio=$EFF_AUDIO profile=$PROFILE_NAME" | tee -a "$LOG"
 
 # Hardware encoder: preflight-verified NVENC (3s smoke test) replaces libx264
 # with identical res/fps/bitrate (preset p4, low-latency CBR). VAAPI/QSV stay
@@ -102,6 +99,14 @@ elif [ "$HW_OK" = "2" ]; then
   VAAPI_VF="format=nv12,hwupload"
   VCODEC_ARGS=(-c:v h264_vaapi -bf 2)
 fi
+# ffmpeg-version compat (Ubuntu 22.04 ships 4.4 without these): probe once.
+FPSMODE_ARGS=(-fps_mode cfr)
+ffmpeg -hide_banner -h full 2>/dev/null | grep -q -- '-fps_mode' || FPSMODE_ARGS=(-vsync cfr)
+AACENC_ARGS=(-c:a aac -aac_coder fast)
+ffmpeg -hide_banner -h encoder=aac 2>/dev/null | grep -q 'aac_coder' || AACENC_ARGS=(-c:a aac)
+# Output: single RTMP publish (live-only; archive/file-loop removed by design).
+MAP_ARGS=(-map 0:v:0 -map 1:a:0)
+OUT_ARGS=(-rw_timeout 10000000 -f flv "$RTMP_TARGET")
 # CPU pinning (empty array = disabled; bash>=4.4 safe with set -u)
 TASKSET_PRE=()
 if [ -n "${TASKSET_FFMPEG:-}" ] && command -v taskset >/dev/null 2>&1; then
@@ -109,31 +114,11 @@ if [ -n "${TASKSET_FFMPEG:-}" ] && command -v taskset >/dev/null 2>&1; then
 fi
 GOP="$((STREAM_FPS * 2))"
 
-# --- File-loop mode: replay the prebuilt daily episode, zero encode ------------
-if [ "$EFF_VIDEO_MODE" = "file" ]; then
-  EP_CURRENT="$BASE_DIR/episodes/current.mp4"
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting FILE loop: $(basename "$(readlink -f "$EP_CURRENT" 2>/dev/null || echo "$EP_CURRENT")") (no UI needed)..." | tee -a "$LOG"
-  "$BASE_DIR/scripts/stop_ui.sh" >/dev/null 2>&1 || true
-  while true; do
-    "${TASKSET_PRE[@]}" ffmpeg -hide_banner -loglevel warning -nostdin \
-      -re -stream_loop -1 -i "$EP_CURRENT" \
-      -map 0:v -map 0:a? \
-      -c copy \
-      -flvflags no_duration_filesize \
-      -rw_timeout 10000000 \
-      -f flv "$RTMP_TARGET" 2>&1 | tee -a "$LOG"
-    EXIT_CODE=$?
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] File loop exited with code $EXIT_CODE. Restarting in 3 seconds..." | tee -a "$LOG"
-    sleep 3
-  done
-  exit 0
-fi
-
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Launching Quran UI environment with profile: $PROFILE_NAME..."
 "$BASE_DIR/scripts/broadcast_ui.sh" >>"$LOG" 2>&1
 trap '"$BASE_DIR/scripts/stop_ui.sh" >/dev/null 2>&1 || true' EXIT INT TERM
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting YouTube 24/7 stream: ${STREAM_WIDTH}x${STREAM_HEIGHT} @ ${STREAM_FPS}fps (${VIDEO_BITRATE}, audio: ${AUDIO_MODE})..." | tee -a "$LOG"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting YouTube 24/7 stream: ${STREAM_WIDTH}x${STREAM_HEIGHT} @ ${STREAM_FPS}fps (${VIDEO_BITRATE}, audio: ${EFF_AUDIO}, hw: ${HW_OK})..." | tee -a "$LOG"
 
 # Extra 1-CPU x264 tuning (micro profile; empty elsewhere = preset defaults)
 X264_ARGS=()
@@ -171,17 +156,16 @@ while true; do
   # exact CFR without the duplicate frames -use_wallclock_as_timestamps caused
   # on x11grab. -rw_timeout aborts a stalled RTMP socket (supervisor restarts).
   "${TASKSET_PRE[@]}" ffmpeg -hide_banner -loglevel warning -nostdin \
-    "${VAAPI_PRE[@]}" -f x11grab -framerate "$STREAM_FPS" -video_size "${STREAM_WIDTH}x${STREAM_HEIGHT}" -draw_mouse 0 -use_shm 1 -thread_queue_size 64 -probesize 32k -analyzeduration 0 -i ":$DISPLAY_NUM.0" \
+    "${VAAPI_PRE[@]}" -f x11grab -framerate "$STREAM_FPS" -video_size "${STREAM_WIDTH}x${STREAM_HEIGHT}" -draw_mouse 0 -thread_queue_size 64 -probesize 32k -analyzeduration 0 -i ":$DISPLAY_NUM.0" \
     "${AUDIO_INPUT_ARGS[@]}" \
-    -map 0:v:0 -map 1:a:0 \
+    "${MAP_ARGS[@]}" \
     -vf "$VAAPI_VF" \
     "${VCODEC_ARGS[@]}" \
     -b:v "$VIDEO_BITRATE" -maxrate "$MAX_BITRATE" -bufsize "$BUF_SIZE" \
-    -g "$GOP" -keyint_min "$GOP" -sc_threshold 0 -r "$STREAM_FPS" -fps_mode cfr \
-    -c:a aac -aac_coder fast -b:a "$AUDIO_BITRATE" -ar "$AUDIO_SAMPLERATE" -ac "$AUDIO_CHANNELS" -af "aresample=${AUDIO_SAMPLERATE}:async=1:first_pts=0" \
+    -g "$GOP" -keyint_min "$GOP" -sc_threshold 0 -r "$STREAM_FPS" "${FPSMODE_ARGS[@]}" \
+    "${AACENC_ARGS[@]}" -b:a "$AUDIO_BITRATE" -ar "$AUDIO_SAMPLERATE" -ac "$AUDIO_CHANNELS" -af "aresample=${AUDIO_SAMPLERATE}:async=1:first_pts=0" \
     -flvflags no_duration_filesize \
-    -rw_timeout 10000000 \
-    -f flv "$RTMP_TARGET" 2>&1 | tee -a "$LOG"
+    "${OUT_ARGS[@]}" 2>&1 | tee -a "$LOG"
 
   EXIT_CODE=$?
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Stream exited with code $EXIT_CODE. Restarting in 3 seconds..." | tee -a "$LOG"

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Autonomous Scheduled Maintenance & Optimizer
+# Quran Live Stream — Autonomous Scheduled Maintenance & Optimizer
 # Best run daily during minimum global viewership window (e.g. 03:30 AM).
 # Handles Git updates, cache purges, log rotation, and zero-downtime memory refresh.
 # ==============================================================================
@@ -76,7 +76,7 @@ if env_stale "$BASE_DIR/runtime/host.env" || env_stale "$BASE_DIR/runtime/net.en
   else
     log "Weekly retune due: stopping stream for a clean measurement window..."
     if command -v systemctl >/dev/null 2>&1; then
-      systemctl --user stop quran-youtube.service quran-tiktok.service 2>/dev/null || true
+      systemctl --user stop quran-live-youtube.service quran-live-tiktok.service 2>/dev/null || true
     fi
     "$BASE_DIR/scripts/stop_ui.sh" >/dev/null 2>&1 || true
     sleep 2
@@ -92,12 +92,10 @@ fi
 log "Performing graceful broadcast refresh during low-viewership window..."
 if [ -f "$BASE_DIR/runtime/broadcast_stopped.flag" ]; then
   log "Broadcast is intentionally stopped, skipping stream/UI restart."
-elif [ -f "$BASE_DIR/runtime/record_active.flag" ]; then
-  log "Episode recording in progress, skipping stream restart (new episode will be picked up next cycle)."
 elif [ "${RETUNE_DID_STOP:-0}" = "1" ]; then
   log "Resuming stream after weekly retune with the new profile..."
   if command -v systemctl >/dev/null 2>&1; then
-    systemctl --user start quran-youtube.service 2>/dev/null || true
+    systemctl --user start quran-live-youtube.service 2>/dev/null || true
     log "Stream service started cleanly via systemd."
   else
     "$BASE_DIR/scripts/stop_ui.sh" >/dev/null 2>&1 || true
@@ -105,8 +103,8 @@ elif [ "${RETUNE_DID_STOP:-0}" = "1" ]; then
     "$BASE_DIR/scripts/broadcast_ui.sh" >>"$LOG_DIR/web.log" 2>&1 &
     log "Broadcast UI restarted cleanly."
   fi
-elif command -v systemctl >/dev/null 2>&1 && systemctl --user is-active --quiet quran-youtube.service 2>/dev/null; then
-  systemctl --user restart quran-youtube.service
+elif command -v systemctl >/dev/null 2>&1 && systemctl --user is-active --quiet quran-live-youtube.service 2>/dev/null; then
+  systemctl --user restart quran-live-youtube.service
   log "Stream service restarted cleanly via systemd."
 else
   "$BASE_DIR/scripts/stop_ui.sh" >/dev/null 2>&1 || true

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Host Detector
+# Quran Live Stream — Host Detector
 # Fast (<2s), no network, no side effects. Prints KEY=VALUE lines describing
 # the machine so first_boot/benchmark/provision can adapt to ANY server:
 # bare metal, KVM/Xen/VMware VM, LXC/OpenVZ, Docker/Podman, any distro.
@@ -47,7 +47,7 @@ MEM_MB="$(awk '/^MemTotal:/{print int($2/1024)}' /proc/meminfo 2>/dev/null || ec
 case "$MEM_MB" in ''|*[!0-9]*) MEM_MB=0 ;; esac
 CPU_N="$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 0)"
 case "$CPU_N" in ''|*[!0-9]*) CPU_N=0 ;; esac
-DISK_AVAIL_MB="$(df -kP / 2>/dev/null | awk 'NR==2{print int($4/1024)}')"
+DISK_AVAIL_MB="$(df -kP / 2>/dev/null | awk 'NR==2{print int($4/1024)}' || true)"
 case "$DISK_AVAIL_MB" in ''|*[!0-9]*) DISK_AVAIL_MB=0 ;; esac
 ROOT_FSTYPE="$(stat -f -c %T / 2>/dev/null || echo unknown)"
 KERNEL="$(uname -r 2>/dev/null || echo unknown)"
@@ -69,6 +69,46 @@ command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1 && HAVE_N
 SWAP_TOTAL_MB="$(awk '/^SwapTotal:/{print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 0)"
 HAVE_ZRAM=0
 [ -b /dev/zram0 ] && HAVE_ZRAM=1 || true
+
+# Confidential computing mode (memory encryption). Ordered cascade, best
+# effort (dmesg may be restricted for unprivileged users; every step guarded).
+# Values: none | sme (BM host transparent encryption) | sev | sev-es | sev-snp
+# | tdx | cca. On OCI: AMD-only (E3/E4 SEV, E5/E6 SEV-SNP, BM TSME/SME).
+CC_MODE="none"; CC_DETAIL=""
+if command -v systemd-detect-virt >/dev/null 2>&1; then
+  CC_DET="$(systemd-detect-virt --cvm 2>/dev/null || true)"
+  case "$CC_DET" in
+    sev-snp) CC_MODE="sev-snp"; CC_DETAIL="detect-virt" ;;
+    sev-es) CC_MODE="sev-es"; CC_DETAIL="detect-virt" ;;
+    sev) CC_MODE="sev"; CC_DETAIL="detect-virt" ;;
+    tdx) CC_MODE="tdx"; CC_DETAIL="detect-virt" ;;
+    cca) CC_MODE="cca"; CC_DETAIL="detect-virt" ;;
+  esac
+fi
+if [ "$CC_MODE" = "none" ]; then
+  if [ -e /dev/sev-guest ]; then CC_MODE="sev-snp"; CC_DETAIL="/dev/sev-guest"
+  elif [ -e /dev/tdx_guest ] || [ -e /dev/tdx-guest ]; then CC_MODE="tdx"; CC_DETAIL="tdx device node"
+  fi
+fi
+if [ "$CC_MODE" = "none" ]; then
+  KMSG="$(dmesg 2>/dev/null | grep -iE 'Memory Encryption Features active|SEV:|tdx: Guest|sev-guest|Secure Encrypted Virtualization' | head -5 || true)"
+  case "$KMSG" in
+    *SEV-SNP*|*sev-snp*) CC_MODE="sev-snp"; CC_DETAIL="dmesg" ;;
+    *SEV-ES*|*sev-es*) CC_MODE="sev-es"; CC_DETAIL="dmesg" ;;
+    *SEV*|*sev*) CC_MODE="sev"; CC_DETAIL="dmesg" ;;
+    *TDX*|*tdx*) CC_MODE="tdx"; CC_DETAIL="dmesg" ;;
+    *SME*|*TSME*) CC_MODE="sme"; CC_DETAIL="dmesg" ;;
+  esac
+fi
+if [ "$CC_MODE" = "none" ]; then
+  CPUFLAGS="$(grep -o -m1 'sme\|sev_snp\|sev_es\|tdx_guest' /proc/cpuinfo 2>/dev/null | head -1 || true)"
+  case "$CPUFLAGS" in
+    sev_snp) CC_MODE="sev-snp"; CC_DETAIL="cpuinfo" ;;
+    sev_es) CC_MODE="sev-es"; CC_DETAIL="cpuinfo" ;;
+    tdx_guest) CC_MODE="tdx"; CC_DETAIL="cpuinfo" ;;
+    sme) CC_MODE="sme"; CC_DETAIL="cpuinfo" ;;
+  esac
+fi
 
 # Distro (best-effort; command-existence wins in provisioner)
 DISTRO="unknown"; DISTRO_LIKE=""
@@ -96,4 +136,6 @@ HOST_HAVE_NVIDIA=$HAVE_NVIDIA
 HOST_SWAP_MB=$SWAP_TOTAL_MB
 HOST_HAVE_ZRAM=$HAVE_ZRAM
 HOST_DISTRO=$DISTRO
+HOST_CC=$CC_MODE
+HOST_CC_DETAIL=$CC_DETAIL
 EOF

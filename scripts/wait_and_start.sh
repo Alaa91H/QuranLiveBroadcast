@@ -1,6 +1,6 @@
 #!/bin/bash
 # ينتظر حتى تضع المفتاح في .env ثم يشغل تلقائيا
-BASE="$HOME/quran-24-7"
+BASE="$HOME/quran-live-stream"
 ENV="$BASE/.env"
 echo "بانتظار مفتاح TikTok في $ENV ..."
 echo "ضع المفتاح ثم شغل: ./scripts/control.sh start tiktok"

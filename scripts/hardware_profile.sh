@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Hardware Profile & Adaptive Streaming Engine
+# Quran Live Stream — Hardware Profile & Adaptive Streaming Engine
 # Automatically detects host CPU, RAM, and GPU to optimize streaming from 720p to 8K.
 # Tailored for rock-solid stability on 1 vCPU / 1 GB RAM (e.g. Oracle Cloud Free Tier).
 # ==============================================================================
@@ -34,6 +34,8 @@ if [ -f "$HOST_ENV_DIR/runtime/host.env" ]; then
   source "$HOST_ENV_DIR/runtime/host.env" 2>/dev/null || true
   set +a
 fi
+# Normalize: "none" confidential mode displays as nothing
+[ "${HOST_CC:-none}" = "none" ] && HOST_CC="" || true
 if [ -n "${STREAM_PROFILE:-}" ]; then
   PROFILE="${STREAM_PROFILE,,}"
 elif [ -n "${HOST_BENCH_PROFILE:-}" ] && [ "${HOST_AUTO_PROFILE:-1}" = "1" ]; then
@@ -285,9 +287,9 @@ export TASKSET_FFMPEG TASKSET_CHROME
 
 if [ "${1:-}" == "--show" ]; then
   echo "=========================================================="
-  echo "Quran Live Broadcast — Auto-Configured Streaming Profile"
+  echo "Quran Live Stream — Auto-Configured Streaming Profile"
   echo "=========================================================="
-  echo "Detected Specs : ${CPU_CORES} CPU Core(s), ${TOTAL_RAM_MB} MB RAM (NVENC: $HAS_NVENC, VAAPI: $HAS_VAAPI, QSV: $HAS_QSV)"
+  echo "Detected Specs : ${CPU_CORES} CPU Core(s), ${TOTAL_RAM_MB} MB RAM (NVENC: $HAS_NVENC, VAAPI: $HAS_VAAPI, QSV: $HAS_QSV${HOST_CC:+, CC: $HOST_CC})"
   echo "Active Profile : $PROFILE_NAME"
   echo "Resolution     : ${STREAM_WIDTH}x${STREAM_HEIGHT} @ ${STREAM_FPS}fps"
   echo "Video Encoding : $VCODEC (Preset: $FFMPEG_PRESET, Bitrate: $VIDEO_BITRATE, Max: $MAX_BITRATE)"

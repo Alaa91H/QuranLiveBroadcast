@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Portable Host Tuner (run once as a sudoer, idempotent)
+# Quran Live Stream — Portable Host Tuner (run once as a sudoer, idempotent)
 # Works on: Ubuntu/Debian/RHEL-clones/Fedora/Arch/Alpine, full VMs and bare
 # metal. Inside containers (Docker/LXC/OpenVZ) privileged steps are SKIPPED
 # gracefully (never aborts): no swapon/modprobe, no vm.* sysctl writes.
@@ -44,7 +44,7 @@ else SWAP_MB=2048; ZRAM_MB=512
 fi
 
 # --- 0. Disk-space guard (need swap + 20% headroom) ---------------------------
-FREE_MB="$(df -kP / 2>/dev/null | awk 'NR==2{print int($4/1024)}')"
+FREE_MB="$(df -kP / 2>/dev/null | awk 'NR==2{print int($4/1024)}' || true)"
 case "$FREE_MB" in ''|*[!0-9]*) FREE_MB=0 ;; esac
 if [ "$FREE_MB" -lt "$((SWAP_MB + SWAP_MB / 5))" ]; then
   log "WARNING: only ${FREE_MB}MB free on /, want $((SWAP_MB + SWAP_MB / 5))MB. Swapfile may be skipped below."
@@ -153,15 +153,40 @@ if swapon --show=NAME,PRIO 2>/dev/null | awk '$1 ~ /^\/dev\/zram/ {found=1} END{
   done < <(swapon --show=NAME,PRIO 2>/dev/null | tail -n +2)
 fi
 
-# --- 3. sysctl (test-write first; containers keep host values) ------------------
+# --- 3. sysctl (test-write WITH sudo; containers keep host values) ------------------
+# NOTE: the writability test itself must run privileged: an unprivileged
+# [ -w ... ] check is always false even when sudo would succeed.
 $SUDO cp "$BASE_DIR/config/99-quran-rt.conf" /etc/sysctl.d/99-quran-rt.conf 2>/dev/null || log "sysctl: cannot write /etc/sysctl.d (read-only?), trying live keys only."
-if [ -w /proc/sys/vm/swappiness ] && $SUDO sysctl -w vm.swappiness=20 >/dev/null 2>&1; then
+if $SUDO sysctl -w vm.swappiness=20 >/dev/null 2>&1; then
   $SUDO sysctl --system >>"$LOG" 2>&1 || $SUDO sysctl -p /etc/sysctl.d/99-quran-rt.conf >>"$LOG" 2>&1 || true
   log "sysctl: 99-quran-rt.conf applied."
 else
-  log "SKIP sysctl vm.*: read-only (container) - leaving host values."
+  log "SKIP sysctl vm.*: denied (container/seccomp?) - leaving host values."
 fi
 $SUDO sysctl -w net.core.somaxconn=1024 >/dev/null 2>&1 || true
+
+# --- 3a. IPv4 preference on IPv4-only hosts --------------------------------------
+# Cloud VCNs are often IPv4-only (no global ::/0 route): getaddrinfo then
+# returns AAAA first and every connect burns timeouts/fails (seen live with
+# YouTube RTMP ingest). Detect and pin IPv4-first via gai.conf.
+if command -v ip >/dev/null 2>&1 && ! ip -6 route show 2>/dev/null | grep -qv '^fe80'; then
+  printf '# Prefer IPv4: no global IPv6 route on this host (IPv4-only network)\nprecedence ::ffff:0:0/96  100\n' | $SUDO tee /etc/gai.conf >/dev/null
+  log "Network: no global IPv6, pinned IPv4-first (gai.conf)."
+else
+  log "Network: global IPv6 present (or ip(8) missing), leaving resolver order."
+fi
+
+# --- 3b. BBR congestion control (lossy-path RTMP stability) ----------------------# Applied ONLY when the running kernel offers it (cloud kernels usually do).
+# fq qdisc is required for BBR pacing; both guarded, reverted silently if absent.
+if sysctl net.ipv4.tcp_available_congestion_control 2>/dev/null | grep -qw bbr; then
+  $SUDO sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1 || true
+  $SUDO sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1 || true
+  $SUDO mkdir -p /etc/sysctl.d
+  printf '[QuranLive BBR]\nnet.core.default_qdisc = fq\nnet.ipv4.tcp_congestion_control = bbr\n' | $SUDO tee /etc/sysctl.d/98-quran-bbr.conf >/dev/null
+  log "BBR+FQ enabled for uplink stability."
+else
+  log "SKIP BBR: kernel lacks tcp_bbr (keeping cubic)."
+fi
 
 # --- 4. journald tiny+volatile (systemd only) ------------------------------------
 if [ "$HOST_SYSTEMD" = "yes" ]; then

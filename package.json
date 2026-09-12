@@ -1,7 +1,7 @@
 {
-  "name": "quran-live-broadcast",
+  "name": "quran-live-stream",
   "version": "2.0.0",
-  "description": "24/7 Autonomous High-Efficiency Quran Live Broadcast with Recitation Sync, Dual Tafsir, and Global Prayer Times",
+  "description": "24/7 Autonomous High-Efficiency Quran Live Stream with Recitation Sync, Dual Tafsir, and Global Prayer Times",
   "main": "web/server.js",
   "scripts": {
     "web": "node web/server.js",

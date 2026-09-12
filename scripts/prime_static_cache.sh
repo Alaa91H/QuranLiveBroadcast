@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Static Asset Primer (first-run data saver)
+# Quran Live Stream — Static Asset Primer (first-run data saver)
 # Downloads everything STATIC once (fonts, full recitation audio, backgrounds)
 # so the 24/7 runtime serves from disk and stops re-spending bandwidth.
 # DYNAMIC data is intentionally NOT primed and keeps fetching live:

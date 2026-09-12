@@ -1,26 +1,26 @@
 #!/bin/bash
 # لوحة تحكم البث
-BASE="$HOME/quran-24-7"
+BASE="$HOME/quran-live-stream"
 case "$1" in
   start)
     echo "تشغيل البث..."
     rm -f "$BASE/runtime/broadcast_stopped.flag"
     systemctl --user daemon-reload
-    if [ "$2" == "youtube" ]; then systemctl --user start quran-youtube.service; systemctl --user status quran-youtube.service --no-pager
-    elif [ "$2" == "tiktok" ]; then systemctl --user start quran-tiktok.service; systemctl --user status quran-tiktok.service --no-pager
-    elif [ "$2" == "dual" ]; then systemctl --user start quran-youtube.service quran-tiktok.service; systemctl --user status quran-youtube.service quran-tiktok.service --no-pager
-    else systemctl --user start quran-youtube.service; echo "✓ تم تشغيل يوتيوب (افتراضي). للتيك توك: $0 start tiktok"; fi
+    if [ "$2" == "youtube" ]; then systemctl --user start quran-live-youtube.service; systemctl --user status quran-live-youtube.service --no-pager
+    elif [ "$2" == "tiktok" ]; then systemctl --user start quran-live-tiktok.service; systemctl --user status quran-live-tiktok.service --no-pager
+    elif [ "$2" == "dual" ]; then systemctl --user start quran-live-youtube.service quran-live-tiktok.service; systemctl --user status quran-live-youtube.service quran-live-tiktok.service --no-pager
+    else systemctl --user start quran-live-youtube.service; echo "✓ تم تشغيل يوتيوب (افتراضي). للتيك توك: $0 start tiktok"; fi
     ;;
   stop)
     echo "ايقاف البث..."
     touch "$BASE/runtime/broadcast_stopped.flag"
-    systemctl --user stop quran-youtube.service quran-tiktok.service 2>/dev/null; "$BASE/scripts/stop_ui.sh"; echo "✓ توقف"
+    systemctl --user stop quran-live-youtube.service quran-live-tiktok.service 2>/dev/null; "$BASE/scripts/stop_ui.sh"; echo "✓ توقف"
     ;;
   restart)
     $0 stop; sleep 2; $0 start $2
     ;;
   status)
-    systemctl --user status quran-youtube.service quran-tiktok.service --no-pager 2>&1 | head -n 80
+    systemctl --user status quran-live-youtube.service quran-live-tiktok.service --no-pager 2>&1 | head -n 80
     echo "--- ps ---"
     ps aux | grep ffmpeg | grep -v grep || echo "لا يوجد ffmpeg"
     echo "--- logs ---"
@@ -30,11 +30,11 @@ case "$1" in
     tail -f "$BASE/logs/stream_${2:-youtube}.log"
     ;;
   enable)
-    systemctl --user enable quran-youtube.service quran-tiktok.service; echo "✓ تشغيل تلقائي عند الاقلاع مفعل"
-    systemctl --user enable --now quran-youtube.service 2>&1 | tail -n 5
+    systemctl --user enable quran-live-youtube.service quran-live-tiktok.service; echo "✓ تشغيل تلقائي عند الاقلاع مفعل"
+    systemctl --user enable --now quran-live-youtube.service 2>&1 | tail -n 5
     ;;
   disable)
-    systemctl --user disable quran-youtube.service quran-tiktok.service; echo "✓ تم تعطيل التشغيل التلقائي"
+    systemctl --user disable quran-live-youtube.service quran-live-tiktok.service; echo "✓ تم تعطيل التشغيل التلقائي"
     ;;
   prepare)
     echo "تجهيز السيرفر قبل البث (تحميل + قياس + فحص، بدون تشغيل)..."

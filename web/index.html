@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="google" content="notranslate"/>
-  <meta name="description" content="Quran Live Broadcast - 24/7 Automated High Efficiency Quran Stream with Verse Recitation Synchronization, Dual Tafsir, and Global Prayer Times"/>
-  <title>Quran Live Broadcast</title>
+  <meta name="description" content="Quran Live Stream - 24/7 Automated High Efficiency Quran Stream with Verse Recitation Synchronization, Dual Tafsir, and Global Prayer Times"/>
+  <title>Quran Live Stream</title>
   <link rel="stylesheet" href="/assets/fonts/fonts.css"/>
   <link rel="stylesheet" href="/style.css"/>
 </head>
@@ -17,6 +17,8 @@
     <!-- LEFT PANEL: QURAN & TAFSIR STAGE -->
     <section class="quran-stage" aria-label="القرآن الكريم">
       <div class="quran-content-wrapper" id="quran-content-wrapper">
+        <!-- Basmala standalone line (visible at each surah start, except 1 & 9) -->
+        <div class="basmala-line" id="basmala-line" style="display:none;">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
         <!-- Arabic Ayah (Without ornament as requested) -->
         <div class="ayah-ar" id="ayah-ar" data-fit="ayah">
           اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ
@@ -26,6 +28,9 @@
         <div class="ayah-translation-en" id="ayah-en" data-fit="translation">
           Allah! There is no deity except Him, the Ever-Living, the Sustainer of [all] existence.
         </div>
+
+        <!-- Khatma progress (overall recitation position) -->
+        <div class="khatma-track" aria-hidden="true"><div class="khatma-fill" id="khatma-fill"></div></div>
 
         <div class="content-divider"></div>
 
@@ -61,7 +66,7 @@
             <div class="surah-title" id="meta-surah-title">
               سُورَةُ البَقَرَةِ <span class="surah-index">(2)</span> <span class="revelation-tag" id="meta-revelation">مَدَنِيَّة</span>
             </div>
-            <div class="ayah-meta">الآية رقم <strong class="gold-num" id="meta-ayah-num">255</strong> من <span id="meta-total-ayahs">286</span></div>
+            <div class="ayah-meta">الآية رقم <strong class="gold-num" id="meta-ayah-num">255</strong> من <span id="meta-total-ayahs">286</span> • سورة <span id="meta-surah-count">2/114</span></div>
           </div>
         </div>
 
@@ -76,8 +81,7 @@
             </svg>
           </div>
           <div class="pill-info-stack">
-            <div class="tafsir-title-ar" id="meta-tafsir-ar">التفسير: المُيَسَّر</div>
-            <div class="tafsir-title-en" id="meta-tafsir-en">Tafsir: Al-Muyassar</div>
+            <div class="tafsir-title" id="meta-tafsir">التفسير المُيَسَّر • Al-Muyassar</div>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Telegram Notifier (graceful when unconfigured)
+# Quran Live Stream — Telegram Notifier (graceful when unconfigured)
 # Sends an alert via Telegram Bot API. Does nothing (exit 0) when
 # TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is empty: reliability features keep
 # working locally, alerts simply stay in the log until credentials are added.

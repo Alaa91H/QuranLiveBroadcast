@@ -26,7 +26,7 @@ async function main() {
   // Find all @font-face blocks
   const blocks = css.split('@font-face').slice(1).map(b => '@font-face' + b);
 
-  let localCss = '/* Offline Local Fonts for Quran Live Broadcast */\n';
+  let localCss = '/* Offline Local Fonts for Quran Live Stream */\n';
   let fontIndex = 1;
 
   for (const block of blocks) {
@@ -52,7 +52,7 @@ async function main() {
     const fontData = await fetchBuffer(remoteUrl);
     fs.writeFileSync(filePath, fontData);
 
-    localCss += `@font-face {\n  font-family: '${family}';\n  font-style: ${style};\n  font-weight: ${weight};\n  font-display: swap;\n  src: url('/assets/fonts/${fileName}') format('woff2');\n`;
+    localCss += `@font-face {\n  font-family: '${family}';\n  font-style: ${style};\n  font-weight: ${weight};\n  font-display: block;\n  src: url('/assets/fonts/${fileName}') format('woff2');\n`;
     if (unicodeRange) {
       localCss += `  unicode-range: ${unicodeRange};\n`;
     }

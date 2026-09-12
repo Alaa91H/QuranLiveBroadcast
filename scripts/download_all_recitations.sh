@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast - Autonomous Complete Recitation Downloader (Alafasy 128k)
+# Quran Live Stream - Autonomous Complete Recitation Downloader (Alafasy 128k)
 # Downloads and caches all 6,236 Quran verse audio files to local disk
 # ==============================================================================
 set -e

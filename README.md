@@ -1,4 +1,4 @@
-# Quran Live Broadcast
+# Quran Live Stream
 
 <p align="center">
   <strong>24/7 Autonomous, High-Efficiency Quran Live Streaming System with Verse-by-Verse Recitation Synchronization, Dual Tafsir, and Global Prayer Times</strong>
@@ -16,14 +16,14 @@
 ---
 
 <p align="center">
-  <img src="screenshot.png" alt="Quran Live Broadcast Live Preview" width="95%" style="border-radius: 8px; box-shadow: 0 12px 36px rgba(0,0,0,0.6);">
+  <img src="screenshot.png" alt="Quran Live Stream Live Preview" width="95%" style="border-radius: 8px; box-shadow: 0 12px 36px rgba(0,0,0,0.6);">
 </p>
 
 ---
 
 ## 📖 Overview
 
-**Quran Live Broadcast** is an enterprise-grade, fully automated 24/7 broadcast system engineered to stream the Holy Quran to YouTube, TikTok, Facebook, and custom RTMP destinations with cinematic aesthetics, gapless verse-by-verse recitation synchronization, bilingual Tafsir, and verified global prayer times across 195 world capitals.
+**Quran Live Stream** is an enterprise-grade, fully automated 24/7 broadcast system engineered to stream the Holy Quran to YouTube, TikTok, Facebook, and custom RTMP destinations with cinematic aesthetics, gapless verse-by-verse recitation synchronization, bilingual Tafsir, and verified global prayer times across 195 world capitals.
 
 Architected specifically to achieve maximum efficiency and rock-solid stability on ultra-low-spec cloud instances (such as **Oracle Cloud Free Tier: 1 vCPU, 1 GB RAM**) without sacrificing visual excellence, while dynamically scaling up to **8K (4320p)** on multi-core GPU workstations.
 
@@ -121,8 +121,8 @@ node -v # Should report v18.0.0 or higher
 Clone the repository and prepare your environment:
 
 ```bash
-git clone https://github.com/Alaa91H/QuranLiveBroadcast.git
-cd QuranLiveBroadcast
+git clone https://github.com/Alaa91H/QuranLiveStream.git
+cd QuranLiveStream
 cp .env.example .env
 ```
 

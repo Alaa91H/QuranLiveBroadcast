@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Quran Live Broadcast — Recitation Playlist Builder (PulseAudio-free audio)
+# Quran Live Stream — Recitation Playlist Builder (PulseAudio-free audio)
 # Scans web/assets/audio/SSSAAA.mp3 (surah 1..114, ayah order — the same order
 # the web UI plays) and writes an ffmpeg concat playlist. Only files >1KB are
 # included. Run full download (scripts/download_all_recitations.sh) first for

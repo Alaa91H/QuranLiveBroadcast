@@ -1,6 +1,6 @@
 #!/bin/bash
 # فحص صحة البث
-BASE="$HOME/quran-24-7"
+BASE="$HOME/quran-live-stream"
 LOG="$BASE/logs/health.log"
 mkdir -p "$(dirname "$LOG")"
 check() {
@@ -20,8 +20,8 @@ check() {
     return 0
   fi
 }
-check quran-youtube.service "stream_youtube"
-check quran-tiktok.service "stream_tiktok"
+check quran-live-youtube.service "stream_youtube"
+check quran-live-tiktok.service "stream_tiktok"
 FREE=$(free -m | awk '/Mem:/ {print $7}')
 if [ "$FREE" -lt 100 ]; then
   echo "[$(date)] تحذير ذاكرة قليلة ${FREE}M" | tee -a "$LOG"
