@@ -10,11 +10,16 @@
 # Safe to run any time: per-group marker files skip completed work, downloads
 # resume where they stopped, and only one instance runs (flock).
 # Knobs (.env): PRIME_STATIC=0 disables all, PRIME_AUDIO=0 skips the big
-# recitation download (~3.5GB, runs niced in background).
+# recitation download (~3.5GB). --light-only (used by broadcast_ui on the hot
+# path) does fonts+backgrounds synchronously and NEVER starts the audio fetch:
+# no bulk background work may compete with the live encode.
 # ==============================================================================
 set -euo pipefail
 BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$BASE_DIR"
+
+LIGHT_ONLY=0
+[ "${1:-}" = "--light-only" ] && LIGHT_ONLY=1
 
 [ -f .env ] && { set -a; source .env; set +a; }
 
@@ -67,9 +72,12 @@ else
 fi
 
 # --- 3. Full recitation audio (GBs, slow): resume-safe, niced -----------------
-# 6236 ayahs in surah order; the downloader skips complete surahs, so an
-# interrupted run continues where it stopped on the next start.
-if [ "${PRIME_AUDIO:-1}" = "0" ]; then
+# NEVER on the streaming hot path (--light-only): bulk fetch belongs to
+# `control.sh prepare` / first_boot. Here it additionally refuses to run while
+# an encoder is active, so it can never drain a live broadcast.
+if [ "$LIGHT_ONLY" = "1" ]; then
+  log "Audio: skipped (light-only mode)."
+elif [ "${PRIME_AUDIO:-1}" = "0" ]; then
   log "Audio: disabled via PRIME_AUDIO=0, skipping."
 elif [ -f "$RUNTIME/prime-audio.done" ]; then
   log "Audio: already primed, skipping."
@@ -78,9 +86,11 @@ else
   if [ "$COUNT" -ge 6236 ]; then
     touch "$RUNTIME/prime-audio.done"
     log "Audio: full set already on disk ($COUNT files)."
+  elif pgrep -f "ffmpeg.*(x11grab|current\.mp4)" >/dev/null 2>&1; then
+    log "Audio: encoder active, refusing bulk download during stream ($COUNT/6236). Run control.sh prepare while stopped."
   else
-    log "Audio: priming full recitation in background ($COUNT/6236, ~3.5GB)..."
-    # niced + backgrounded: ingress-bound, must not disturb the live encode.
+    log "Audio: priming full recitation in background ($COUNT/6236, ~3.5GB, no encoder running)..."
+    # niced + backgrounded: ingress-bound and nothing else encodes right now.
     nice -n 10 nohup "$BASE_DIR/scripts/download_all_recitations.sh" >>"$LOG" 2>&1 &
     echo $! >"$RUNTIME/prime-audio.pid"
     log "Audio: downloader pid $(cat "$RUNTIME/prime-audio.pid"), progress in $LOG."

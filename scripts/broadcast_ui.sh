@@ -16,12 +16,11 @@ PIDFILE="$RUNTIME/quran-web.pid"
 XVFB_PIDFILE="$RUNTIME/quran-xvfb.pid"
 CHROME_PIDFILE="$RUNTIME/quran-chrome.pid"
 
-# 0. First-run static primer (fonts/audio/backgrounds, marker-gated, detached):
-# downloads everything static once so runtime serves from disk; dynamic data
-# (clock/prayer/weather) keeps fetching live and is never primed.
+# 0. Light static primer (SYNCHRONOUS, seconds): fonts + backgrounds only.
+# Policy: nothing bulk downloads while the broadcast runs. The GB-scale audio
+# fetch belongs to `control.sh prepare` / first_boot, never to the hot path.
 if [ "${PRIME_STATIC:-1}" != "0" ]; then
-  nohup "$BASE_DIR/scripts/prime_static_cache.sh" >>"$LOG_DIR/prime_static.log" 2>&1 &
-  disown 2>/dev/null || true
+  "$BASE_DIR/scripts/prime_static_cache.sh" --light-only >>"$LOG_DIR/prime_static.log" 2>&1 || true
 fi
 
 # 1. Setup Virtual Audio Sink (PulseAudio) for synchronized audio capture.
@@ -73,19 +72,39 @@ start_browser() {
     local BROWSER_BIN
     BROWSER_BIN="$(command -v google-chrome || command -v chromium-browser || command -v chromium || echo "chromium")"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Browser ($BROWSER_BIN, ${STREAM_WIDTH}x${STREAM_HEIGHT}, memory cap ${CHROME_MEM_MB}MB, audio: ${AUDIO_MODE:-pulse})..."
+    # File-audio mode: page is video-only. --mute-audio keeps the media
+    # timeline (ayah sync preserved); --disable-audio-output lets the audio
+    # service idle instead of opening a (muted) output stream.
     local CHROME_AUDIO_FLAGS=()
     local CHROME_SINK_ENV=""
     if [ "${AUDIO_MODE:-pulse}" = "file" ]; then
-      CHROME_AUDIO_FLAGS=(--mute-audio)
+      CHROME_AUDIO_FLAGS=(--mute-audio --disable-audio-output)
     else
       CHROME_SINK_ENV="PULSE_SINK=quran_sink"
     fi
+    # Micro profile: calm the page itself (?lowfx=1 kills decorative
+    # animations, ?cities=N shrinks the rotating city DOM).
+    local APP_QUERY=""
+    if [ "${PROFILE:-}" = "micro" ]; then
+      APP_QUERY="?lowfx=1&cities=3"
+    fi
+    # NOTE: --disable-software-rasterizer is deliberately NOT used: with
+    # --disable-gpu on Xvfb, software raster is the only paint path and
+    # disabling it blanks or destabilizes capture on Chrome 120+.
+    # NOTE: --single-process/--no-zygote are deliberately NOT used: they save
+    # RAM but one renderer crash kills the whole 24/7 browser.
     # shellcheck disable=SC2086
-    DISPLAY=":$DISPLAY_NUM" $CHROME_SINK_ENV "$BROWSER_BIN" \
+    # CPU pinning (empty array = disabled; bash>=4.4 safe with set -u)
+    local TASKSET_PRE=()
+    if [ -n "${TASKSET_CHROME:-}" ] && command -v taskset >/dev/null 2>&1; then
+      TASKSET_PRE=(taskset -c "$TASKSET_CHROME")
+    fi
+    DISPLAY=":$DISPLAY_NUM" $CHROME_SINK_ENV "${TASKSET_PRE[@]}" "$BROWSER_BIN" \
       --no-sandbox \
       --disable-gpu \
+      --in-process-gpu \
+      --enable-low-end-device-mode \
       --disable-dev-shm-usage \
-      --disable-software-rasterizer \
       --renderer-process-limit=1 \
       --disable-extensions \
       --disable-background-networking \
@@ -94,23 +113,35 @@ start_browser() {
       --no-first-run \
       --no-default-browser-check \
       --hide-crash-restore-bubble \
-      --disable-features=Translate,TranslateUI,MediaRouter,OptimizationHints \
+      --noerrdialogs \
+      --disable-logging --log-level=3 \
+      --disable-crash-reporter --no-crash-upload \
+      --disable-breakpad \
+      --disable-hang-monitor --disable-gpu-watchdog \
+      --disable-client-side-phishing-detection --disable-domain-reliability --no-pings \
+      --disable-notifications --block-new-web-contents --deny-permission-prompts \
+      --disable-features=Translate,TranslateUI,MediaRouter,DialMediaRouteProvider,OptimizationHints,InterestFeedContentSuggestions,PrivacySandboxSettings4,AutofillServerCommunication,CertificateTransparencyComponentUpdater,GlobalMediaControls,HeavyAdPrivacyMitigations,CalculateNativeWinOcclusion,DestroyProfileOnBrowserClose,PaintHolding \
       --disable-component-update \
       --disable-component-extensions-with-background-pages \
       --disable-background-timer-throttling \
       --disable-renderer-backgrounding \
       --disable-backgrounding-occluded-windows \
-      --disable-application-cache \
       --aggressive-cache-discard \
       --disk-cache-size=1048576 \
       --media-cache-size=1048576 \
+      --password-store=basic \
+      --force-color-profile=srgb \
+      --disable-lcd-text \
+      --hide-scrollbars \
+      --disable-smooth-scrolling \
       --autoplay-policy=no-user-gesture-required \
       --allow-running-insecure-content \
       --kiosk \
       --window-size="${STREAM_WIDTH},${STREAM_HEIGHT}" \
-      --js-flags="--max-old-space-size=${CHROME_MEM_MB}" \
+      --window-position=0,0 \
+      --js-flags="--max-old-space-size=${CHROME_MEM_MB} --optimize-for-size" \
       "${CHROME_AUDIO_FLAGS[@]}" \
-      --app="http://127.0.0.1:$PORT/" >"$LOG_DIR/chromium.log" 2>&1 & echo $! >"$CHROME_PIDFILE"
+      --app="http://127.0.0.1:$PORT/$APP_QUERY" >"$LOG_DIR/chromium.log" 2>&1 & echo $! >"$CHROME_PIDFILE"
     echo "$want_sig" >"$RUNTIME/chrome-audio.sig"
     sleep 3
   fi

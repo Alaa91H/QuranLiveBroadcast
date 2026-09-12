@@ -11,6 +11,10 @@ ExecStart=%h/quran-24-7/scripts/stream_youtube.sh
 Restart=always
 RestartSec=5
 TimeoutStopSec=30
+# Scheduler priority for the realtime encode + OOM order: the stream is the
+# last thing the OOM killer may take (never -1000 = unkillable hang risk).
+Nice=-5
+OOMScoreAdjust=-300
 StandardOutput=append:%h/quran-24-7/logs/systemd_youtube.log
 StandardError=append:%h/quran-24-7/logs/systemd_youtube.log
 

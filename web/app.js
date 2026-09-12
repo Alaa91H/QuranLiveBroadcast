@@ -677,6 +677,12 @@ async function init() {
   // 4. Fetch dynamic data & start Quran verse
   // Clean recording mode (?clean=1): fullscreen Quran stage, side panel hidden
   if (params.get('clean') === '1') document.body.classList.add('clean');
+  // Low-FX stream mode (?lowfx=1): kill decorative animations/transitions to
+  // cut renderer CPU (clock tick + ayah changes still update, just unanimated)
+  if (params.get('lowfx') === '1') document.body.classList.add('lowfx');
+  // Slim city DOM (?cities=N): fewer rotating cards = smaller layout/paint cost
+  const qCities = parseInt(params.get('cities'), 10);
+  if (qCities > 0 && qCities <= 24) state.perPage = qCities;
   loadCapitalsPage();
   loadQuranVerse(state.currentSurah, state.currentAyah);
 

@@ -105,14 +105,14 @@ if ! pactl list short sources 2>/dev/null | grep -q "$SINK.monitor"; then
 fi
 
 timeout "$((MINUTES * 60 + 180))" ffmpeg -hide_banner -loglevel warning -nostdin \
-  -use_wallclock_as_timestamps 1 -thread_queue_size 1024 -f x11grab -draw_mouse 0 -framerate "$FPS" -video_size "${W}x${H}" -i ":$DISP.0" \
+  -f x11grab -framerate "$FPS" -video_size "${W}x${H}" -draw_mouse 0 -use_shm 1 -thread_queue_size 64 -probesize 32k -analyzeduration 0 -i ":$DISP.0" \
   "${AUDIO_ARGS[@]}" \
   -map 0:v:0 -map 1:a:0 \
   -vf "format=yuv420p" \
   -c:v libx264 -preset ultrafast -tune zerolatency -threads 2 \
   -b:v 4200k -maxrate 4800k -bufsize 8400k \
-  -g 30 -keyint_min 15 -r "$FPS" \
-  -c:a aac -b:a 128k -ar 44100 -ac 2 -af "aresample=44100:async=1:first_pts=0" \
+  -g 30 -keyint_min 30 -sc_threshold 0 -r "$FPS" -fps_mode cfr \
+  -c:a aac -aac_coder fast -b:a 128k -ar 44100 -ac 2 -af "aresample=44100:async=1:first_pts=0" \
   -movflags +faststart -t "$((MINUTES * 60))" \
   "$TMP_OUT" 2>&1 | tee -a "$LOG" || true
 

@@ -31,6 +31,19 @@ log() {
 exec 9>"$RUNTIME/record_episode.lock"
 flock -n 9 || { log "Another recording is already running, exiting."; exit 0; }
 
+# Safety guards: a second simultaneous encode is the heaviest scheduled load.
+# Refuse (cron retries tomorrow) when the box is already saturated.
+LOAD1="$(awk '{print int($1)}' /proc/loadavg 2>/dev/null || echo 0)"
+SWAP_FREE_KB="$(awk '/SwapFree/{print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+DISK_AVAIL_KB="$(df -k "$EP_DIR" 2>/dev/null | awk 'NR==2{print $4}')"
+case "$LOAD1" in ''|*[!0-9]*) LOAD1=0 ;; esac
+case "$SWAP_FREE_KB" in ''|*[!0-9]*) SWAP_FREE_KB=0 ;; esac
+case "$DISK_AVAIL_KB" in ''|*[!0-9]*) DISK_AVAIL_KB=0 ;; esac
+NEED_KB=$((MINUTES * 12000 + 1000000))
+[ "$LOAD1" -ge 10 ] && { log "ABORT: load too high (${LOAD1}), cron retries tomorrow."; exit 2; }
+[ "$SWAP_FREE_KB" -lt 500000 ] && { log "ABORT: swap free too low ($((SWAP_FREE_KB / 1024))MB)."; exit 2; }
+[ "$DISK_AVAIL_KB" -lt "$NEED_KB" ] && { log "ABORT: disk free too low ($((DISK_AVAIL_KB / 1024))MB)."; exit 2; }
+
 touch "$FLAG"
 trap 'rm -f "$FLAG"' EXIT INT TERM
 
@@ -65,14 +78,14 @@ if ! command -v pactl >/dev/null 2>&1 || ! pactl list short sources 2>/dev/null 
 fi
 
 timeout "$((MINUTES * 60 + 120))" ffmpeg -hide_banner -loglevel warning -nostdin \
-  -use_wallclock_as_timestamps 1 -thread_queue_size 1024 -f x11grab -draw_mouse 0 -framerate "$STREAM_FPS" -video_size "${STREAM_WIDTH}x${STREAM_HEIGHT}" -i ":$DISPLAY_NUM.0" \
+  -f x11grab -framerate "$STREAM_FPS" -video_size "${STREAM_WIDTH}x${STREAM_HEIGHT}" -draw_mouse 0 -use_shm 1 -thread_queue_size 64 -probesize 32k -analyzeduration 0 -i ":$DISPLAY_NUM.0" \
   "${AUDIO_ARGS[@]}" \
   -map 0:v:0 -map 1:a:0 \
   -vf "format=yuv420p" \
   -c:v "$VCODEC" -preset "$FFMPEG_PRESET" -tune "$FFMPEG_TUNE" -threads "$FFMPEG_THREADS" \
   -b:v "$VIDEO_BITRATE" -maxrate "$MAX_BITRATE" -bufsize "$BUF_SIZE" \
-  -g "$((STREAM_FPS * 2))" -keyint_min "$STREAM_FPS" -r "$STREAM_FPS" \
-  -c:a aac -b:a "$AUDIO_BITRATE" -ar "$AUDIO_SAMPLERATE" -ac 2 -af "aresample=${AUDIO_SAMPLERATE}:async=1:first_pts=0" \
+  -g "$((STREAM_FPS * 2))" -keyint_min "$((STREAM_FPS * 2))" -sc_threshold 0 -r "$STREAM_FPS" -fps_mode cfr \
+  -c:a aac -aac_coder fast -b:a "$AUDIO_BITRATE" -ar "$AUDIO_SAMPLERATE" -ac 2 -af "aresample=${AUDIO_SAMPLERATE}:async=1:first_pts=0" \
   -movflags +faststart -t "$((MINUTES * 60))" \
   "$TMP_OUT" 2>&1 | tee -a "$LOG" || true
 
@@ -94,7 +107,20 @@ fi
 
 mv "$TMP_OUT" "$FINAL_OUT"
 
-# Keep the 14 newest slices (~15GB max at 1200k); build_loop.sh assembles
-# the 24h loop from them. current.mp4 is managed by build_loop.sh only.
+# Retention is disk-aware: keep newest 14 slices, then drop oldest while / use
+# exceeds 85% (protects the OS + swapfiles on small disks). current.mp4 is
+# managed by build_loop.sh only; the loop file itself is never pruned here.
 ls -t "$EP_DIR"/seg-*.mp4 2>/dev/null | tail -n +15 | xargs -r rm -f
+disk_pct() {
+  local p
+  p="$(df -P "$EP_DIR" 2>/dev/null | awk 'NR==2{gsub(/%/,"",$5); print $5}')"
+  case "$p" in ''|*[!0-9]*) p=0 ;; esac
+  echo "$p"
+}
+while [ "$(disk_pct)" -ge 85 ]; do
+  OLDEST="$(ls -t "$EP_DIR"/seg-*.mp4 2>/dev/null | tail -n 1)"
+  [ -z "$OLDEST" ] && break
+  log "Disk >85%, pruning oldest slice $(basename "$OLDEST")."
+  rm -f "$OLDEST"
+done
 log "Slice ready: $(basename "$FINAL_OUT") (${DUR_INT}s). Run build_loop.sh to extend the 24h loop."

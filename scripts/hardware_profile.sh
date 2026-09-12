@@ -13,21 +13,34 @@ CPU_CORES=$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null ||
 case "$TOTAL_RAM_MB" in ''|*[!0-9]*) TOTAL_RAM_MB=1024 ;; esac
 case "$CPU_CORES" in ''|*[!0-9]*) CPU_CORES=1 ;; esac
 
-# Detect Hardware Acceleration (NVENC, VAAPI)
+# Detect Hardware Acceleration (NVENC, VAAPI, QuickSync)
 HAS_NVENC=0
 HAS_VAAPI=0
+HAS_QSV=0
 if command -v ffmpeg >/dev/null 2>&1; then
   ffmpeg -encoders 2>/dev/null | grep -q h264_nvenc && HAS_NVENC=1 || true
   ffmpeg -encoders 2>/dev/null | grep -q h264_vaapi && HAS_VAAPI=1 || true
+  ffmpeg -encoders 2>/dev/null | grep -q ' h264_qsv ' && HAS_QSV=1 || true
 fi
 
 # 2. Determine Profile (Manual Override via $STREAM_PROFILE or Auto-detection)
-# Options: micro (480p ultra-low), eco (720p), balanced (1080p),
-#          high (2K/1440p), ultra (4K), extreme (8K)
+# Options: nano (360p last-resort), micro (480p ultra-low), eco (720p),
+#          balanced (1080p), high (2K/1440p), ultra (4K), extreme (8K)
+# Precedence: explicit STREAM_PROFILE > measured host.env benchmark > auto-detect
+HOST_ENV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." 2>/dev/null && pwd || echo .)"
+if [ -f "$HOST_ENV_DIR/runtime/host.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$HOST_ENV_DIR/runtime/host.env" 2>/dev/null || true
+  set +a
+fi
 if [ -n "${STREAM_PROFILE:-}" ]; then
   PROFILE="${STREAM_PROFILE,,}"
+elif [ -n "${HOST_BENCH_PROFILE:-}" ] && [ "${HOST_AUTO_PROFILE:-1}" = "1" ]; then
+  PROFILE="${HOST_BENCH_PROFILE,,}"
 elif [ -n "${STREAM_RES:-}" ]; then
   case "${STREAM_RES,,}" in
+    360p|ld|nano) PROFILE="nano" ;;
     480p|sd|micro) PROFILE="micro" ;;
     720p|hd) PROFILE="eco" ;;
     1080p|fhd) PROFILE="balanced" ;;
@@ -53,8 +66,37 @@ else
   fi
 fi
 
+# Unknown names (typo, stale benchmark file) fall back to balanced, never empty
+case "${PROFILE:-}" in
+  nano|micro|eco|balanced|high|ultra|extreme) ;;
+  *) PROFILE="balanced" ;;
+esac
+
 # 3. Configure Resolution, Bitrate, Encoding & Memory Limits
 case "$PROFILE" in
+  nano)
+    # Last-resort fluency (<=700MB RAM or failed benchmark): 360p is coarse
+    # for Arabic glyphs, but a fluent 360p beats a stuttering 480p.
+    PROFILE_NAME="Nano (360p Last-Resort - tiny RAM/CPU)"
+    STREAM_WIDTH=640
+    STREAM_HEIGHT=360
+    STREAM_FPS="${STREAM_FPS:-10}"
+    VIDEO_BITRATE="${VIDEO_BITRATE:-500k}"
+    MAX_BITRATE="${MAX_BITRATE:-800k}"
+    BUF_SIZE="1200k"
+    AUDIO_BITRATE="${AUDIO_BITRATE:-64k}"
+    AUDIO_CHANNELS="${AUDIO_CHANNELS:-1}"
+    AUDIO_SAMPLERATE=44100
+    FFMPEG_PRESET="ultrafast"
+    FFMPEG_TUNE="zerolatency"
+    FFMPEG_THREADS=1
+    X264_PARAMS="ref=1:mixed-refs=0:trellis=0:cabac=0:8x8dct=0:weightp=0:me=dia:subme=0:analyse=i4x4:scenecut=0:keyint=20:min-keyint=20:no-scenecut:no-chroma-me:merange=8:nal-hrd=none:filler=0:force-cfr=1:fast-pskip=1:dct-decimate=1"
+    DEFAULT_AUDIO_MODE="file"
+    NODE_MEM_MB=96
+    CHROME_MEM_MB=128
+    VCODEC="libx264"
+    ;;
+
   micro)
     # Ultra-Low Resource Quran Mode (<=1GB RAM or 1 vCPU, e.g. throttled free tier).
     # 854x480 @10fps: mostly-static Quran pages stay readable, CPU ~= 1/3 of eco.
@@ -66,14 +108,19 @@ case "$PROFILE" in
     VIDEO_BITRATE="${VIDEO_BITRATE:-800k}"
     MAX_BITRATE="${MAX_BITRATE:-1000k}"
     BUF_SIZE="1600k"
-    AUDIO_BITRATE="${AUDIO_BITRATE:-128k}"
+    AUDIO_BITRATE="${AUDIO_BITRATE:-64k}"
+    AUDIO_CHANNELS="${AUDIO_CHANNELS:-1}"
     AUDIO_SAMPLERATE=44100
     FFMPEG_PRESET="ultrafast"
     FFMPEG_TUNE="zerolatency"
     FFMPEG_THREADS=1
-    # Extra 1-CPU x264 savings on top of ultrafast+zerolatency (fixed GOP saves
-    # lookahead; the rest trims analysis thepreset still performs).
-    X264_PARAMS="ref=1:mixed-refs=0:trellis=0:cabac=0:8x8dct=0:weightp=0:me=dia:subme=0:analyse=i4x4:scenecut=0:keyint=20:min-keyint=10"
+    # Verified extra savings on top of ultrafast+zerolatency (which already set
+    # cabac=0 ref=1 bframes=0 deblock=off aq-mode=0 weightp=0 8x8dct=0 me=dia
+    # subme=0 trellis=0 mixed-refs=0 mbtree=0 scenecut=0 partitions=none):
+    # fixed GOP (no I-spikes), no chroma-ME, tight dia range, no filler.
+    # Deliberately NOT included: no-psy (softens glyph edges for ~0% CPU),
+    # profile baseline (worse text compression at same CBR), threads>1.
+    X264_PARAMS="ref=1:mixed-refs=0:trellis=0:cabac=0:8x8dct=0:weightp=0:me=dia:subme=0:analyse=i4x4:scenecut=0:keyint=20:min-keyint=20:no-scenecut:no-chroma-me:merange=8:nal-hrd=none:filler=0:force-cfr=1:fast-pskip=1:dct-decimate=1"
     DEFAULT_AUDIO_MODE="file"
     NODE_MEM_MB=112
     CHROME_MEM_MB=160
@@ -218,15 +265,33 @@ DEFAULT_AUDIO_MODE="${DEFAULT_AUDIO_MODE:-pulse}"
 AUDIO_MODE="${AUDIO_MODE:-$DEFAULT_AUDIO_MODE}"
 export AUDIO_MODE
 
+# Audio channels: micro streams dual-mono (centered recitation, YouTube-safe),
+# others keep stereo. Explicit $AUDIO_CHANNELS in .env always wins.
+AUDIO_CHANNELS="${AUDIO_CHANNELS:-2}"
+export AUDIO_CHANNELS
+
+# CPU pinning (taskset): on 2+ CPUs isolate the realtime encode (core 0) from
+# the browser (last core) to cut cache contention on shared vCPUs. Empty =
+# no pinning. Explicit $TASKSET_FFMPEG/$TASKSET_CHROME in .env always win.
+# Single CPU or missing taskset binary => pinning silently disabled at use site.
+if [ "${CPU_CORES:-0}" -ge 2 ]; then
+  TASKSET_FFMPEG="${TASKSET_FFMPEG:-0}"
+  TASKSET_CHROME="${TASKSET_CHROME:-$((CPU_CORES - 1))}"
+else
+  TASKSET_FFMPEG="${TASKSET_FFMPEG:-}"
+  TASKSET_CHROME="${TASKSET_CHROME:-}"
+fi
+export TASKSET_FFMPEG TASKSET_CHROME
+
 if [ "${1:-}" == "--show" ]; then
   echo "=========================================================="
   echo "Quran Live Broadcast — Auto-Configured Streaming Profile"
   echo "=========================================================="
-  echo "Detected Specs : ${CPU_CORES} CPU Core(s), ${TOTAL_RAM_MB} MB RAM (NVENC: $HAS_NVENC, VAAPI: $HAS_VAAPI)"
+  echo "Detected Specs : ${CPU_CORES} CPU Core(s), ${TOTAL_RAM_MB} MB RAM (NVENC: $HAS_NVENC, VAAPI: $HAS_VAAPI, QSV: $HAS_QSV)"
   echo "Active Profile : $PROFILE_NAME"
   echo "Resolution     : ${STREAM_WIDTH}x${STREAM_HEIGHT} @ ${STREAM_FPS}fps"
   echo "Video Encoding : $VCODEC (Preset: $FFMPEG_PRESET, Bitrate: $VIDEO_BITRATE, Max: $MAX_BITRATE)"
-  echo "Audio Encoding : AAC ($AUDIO_BITRATE @ ${AUDIO_SAMPLERATE}Hz, source: $AUDIO_MODE)"
+  echo "Audio Encoding : AAC ${AUDIO_CHANNELS}ch ($AUDIO_BITRATE @ ${AUDIO_SAMPLERATE}Hz, source: $AUDIO_MODE)"
   echo "Memory Budget  : Node.js max ${NODE_MEM_MB}MB | Chromium max ${CHROME_MEM_MB}MB"
   echo "=========================================================="
 fi

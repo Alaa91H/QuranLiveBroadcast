@@ -63,6 +63,14 @@ body.clean .world-panel {
   display: none;
 }
 
+/* Low-FX stream mode (?lowfx=1): no decorative animation/transition cost */
+body.lowfx *,
+body.lowfx *::before,
+body.lowfx *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
 /* =========================================
    LEFT PANEL: QURAN & TAFSIR STAGE
    ========================================= */
